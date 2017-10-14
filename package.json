@@ -4,7 +4,7 @@
   "description": "Backend for Taozi",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "NODE_ENV='test' mocha --exit test/**/*_spec.js "
   },
   "repository": {
     "type": "git",
@@ -26,5 +26,10 @@
     "koa-router": "^7.2.1",
     "mongodb": "^2.2.31",
     "strong-params": "^0.7.1"
+  },
+  "devDependencies": {
+    "expect.js": "^0.3.1",
+    "mocha": "^4.0.1",
+    "mock-require": "^2.0.2"
   }
 }
