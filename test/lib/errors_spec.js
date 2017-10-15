@@ -28,6 +28,16 @@ describe('Errors', ()=>{
 		})
 	});
 
+	describe('#clear()', () => {
+		it('clears all messages and properties', () => {
+			let errors = new Errors();
+			errors.add('this_prop', 'is all messed up');
+			expect(errors.empty).to.be(false);
+			errors.clear();
+			expect(errors.empty).to.be(true);
+		});
+	});
+
 	describe('#fullMessages', () => {
 		it('returns an array of messages describing errors', ()=>{
 			let errors = new Errors();
