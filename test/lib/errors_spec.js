@@ -38,12 +38,23 @@ describe('Errors', ()=>{
 		});
 	});
 
-	describe('#fullMessages', () => {
+	describe('#full_messages', () => {
 		it('returns an array of messages describing errors', ()=>{
 			let errors = new Errors();
-			expect(errors.fullMessages.length).to.be(0);
+			expect(errors.full_messages.length).to.be(0);
 			errors.add('some_prop', 'is bad');
-			expect(errors.fullMessages[0]).to.be('some_prop is bad');
+			expect(errors.full_messages[0]).to.be('some_prop is bad');
+		});
+	});
+
+	describe('#short_message', () => {
+		it('returns a short summary of the errors', ()=>{
+			let errors = new Errors();
+			errors.add('butt', 'is bad');
+			errors.add('butt', 'is also the wrong format');
+			expect(errors.short_message).to.match(/butt is not valid/);
+			errors.add('some_prop', 'stinks');
+			expect(errors.short_message).to.match(/butt, some_prop are not valid/);
 		});
 	});
 });
