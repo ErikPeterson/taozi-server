@@ -3,6 +3,7 @@
 const Errors = require('../lib/errors');
 const DB = require('../lib/db');
 const _ = require('lodash');
+const RecordInvalid = require('./errors/record_invalid');
 
 const processRenderableAttributes = (ras, attrs={}) => {
     return ras.reduce((obj, ra) => {
@@ -123,25 +124,41 @@ class ModelBase {
     }
 
     save(){
-        if(this.new_record) {
+        if(!this.valid) throw new RecordInvalid(this, this.errors);
+        let was_new = this.new_record;
+        if(was_new) this.runHook('before_create');
+        this.runHook('before_save');
+        
+        if(was_new) {
             return DB.save(this.constructor.column_name, _.merge({}, this._attributes, this._changes)).then((result)=>{
                 this._attributes = _.merge(this._attributes, result.ops[0]);
                 this._changes = {};
+                this.runHook('after_save');
+                if(was_new) this.runHook('after_create');
                 return true;
             });
         }
-
+        this.runHook('before_update');
         return DB.update(this.constructor.column_name, this._id, this._changes).then(()=> {
             this._attributes = _.merge(this._attributes, this._changes);
             this._changes = {};
+            this.runHook('after_save');
+            this.runHook('after_update');
             return true;
         });
     }
 
     validate(){
         this.errors.clear();
+        this.runHook('before_validate');
         validateInstance(this.constructor.schema, this);
+        this.runHook('after_validate');
         return this.errors;
+    }
+
+    runHook(hook){
+        let fns = this.constructor[hook];
+        fns.forEach((fn) => this[fn]() )
     }
 
     get valid(){
@@ -162,6 +179,15 @@ class ModelBase {
         await inst.save();
         return inst;
     }
+
+    static get before_validate(){ return []; }
+    static get after_validate(){ return []; }
+    static get before_save(){ return []; }
+    static get after_save(){ return []; }
+    static get before_create(){ return []; }
+    static get after_create(){ return []; }
+    static get before_update(){ return []; }
+    static get after_update(){ return []; }
 
 }
 

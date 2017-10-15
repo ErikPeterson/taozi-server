@@ -151,7 +151,7 @@ describe('ModelBase', () => {
 		describe('with a persisted record', () => {
 			it('returns false if no attributes have been changed since last save', async () => {
 				let inst = new FakeModel({name: 'name me'});
-				inst.set('options', {yes: 'no'});
+				inst.set('options', {hey: 'now'});
 				await inst.save();
 				expect(inst.changed).to.be(false);
 			});
@@ -221,7 +221,7 @@ describe('ModelBase', () => {
 					});
 				});
 
-				describe('if the insance is valid', () => {
+				describe('if the instance is valid', () => {
 					it('returns the empty errors object', () => {
 						let inst = new FakeModel({name: 'hello'});
 						let errs = inst.validate();
@@ -280,6 +280,19 @@ describe('ModelBase', () => {
 					expect(inst.get('name')).to.be('shoot');
 				});	
 			});
+
+			describe('with an invalid record', () => {
+				it('throws a ModelInvalid error', async () => {
+					let inst = new FakeModel({name: 1});
+					try{
+						await inst.save();
+					} catch(e) {
+						expect(e.constructor.name).to.be('RecordInvalid');
+						expect(inst.errors.empty).to.not.be.ok();
+						expect(inst.persisted).to.not.be.ok();
+					}
+				});
+			});
 		});
 
 		describe('.create(attributes)', () => {
@@ -291,7 +304,25 @@ describe('ModelBase', () => {
 			});
 		});
 
+		describe('hooks', () => {
+			it('run in the order before_validate, after_validate, before_create, before_update, before_save, after_save, after_create, after_update', async () => {
+				let inst = await FakeModel.create({name: 'hey'});
+				expect(inst.before_validate_called).to.be.ok();
+				expect(inst.after_validate_called - inst.before_validate_called).to.be.greaterThan(0);
+				expect(inst.before_create_called - inst.after_validate_called).to.be.greaterThan(0);
+				expect(inst.before_save_called - inst.before_create_called).to.be.greaterThan(0);
+				expect(inst.after_save_called - inst.before_save_called).to.be.greaterThan(0);
+				expect(inst.after_create_called - inst.after_save_called).to.be.greaterThan(0);
+
+				inst.set('name', 'butt');
+				await inst.save();
+				expect(inst.before_update_called - inst.before_create_called).to.be.greaterThan(0);
+				expect(inst.after_update_called - inst.after_save_called).to.be.greaterThan(0);
+			});
+		});
+
 	});
+
 
 
 });
