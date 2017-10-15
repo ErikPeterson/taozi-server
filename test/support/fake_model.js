@@ -11,6 +11,22 @@ class FakeModel extends ModelBase {
 		return ['_id', 'name', {'options': ['hey', 'now', {'what': ['yes']}]}]
 	}
 
+	static get schema(){
+		return {
+					name: '',
+					options: {
+						hey: '',
+						now: '',
+						what: {
+							yes: '',
+							no: '',
+							hello: {}
+						}
+
+					}
+				};
+	}
+
 }
 
 module.exports = FakeModel;

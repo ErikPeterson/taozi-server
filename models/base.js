@@ -17,11 +17,44 @@ const processRenderableAttributes = (ras, attrs={}) => {
     }, {})
 };
 
+const compare = (schema, attrs, parent_key, errors) => {
+    for(let key in schema){
+        if(attrs.hasOwnProperty(key)) {
+            let expected = Array.isArray(schema[key]) ? 'array' : typeof schema[key];
+            let actual = Array.isArray(attrs[key]) ? 'array' : typeof attrs[key];
+            let error_key = parent_key ? `${parent_key}.${key}` : key;
+
+            if(expected === actual) {
+                if(actual === 'object'){
+                    let expected_keys = Object.getOwnPropertyNames(schema[key]);
+                    if(expected_keys.length > 0){
+                        Object.getOwnPropertyNames(attrs[key]).forEach((k) => { 
+                            if(expected_keys.indexOf(k) === -1){
+                                let inner_error_key = `${error_key}.${k}`;
+                                errors.add(inner_error_key, `is not a permitted key`);
+                            }
+                        }); 
+                    }
+                    compare(schema[key], attrs[key], error_key, errors);
+                }
+            } else {
+                errors.add(error_key, `must be a \`${expected}'`);
+            }
+        }
+    }
+};
+
+const validateInstance = (schema, instance) => {
+    let attrs = instance.new_record ? _.merge({}, instance._attributes, instance._changes) : instance._changes;
+    return compare(schema, attrs, undefined, instance.errors);
+};
+
 class ModelBase {
 
     constructor(attributes = {}){
         this._attributes = attributes;
         this._changes = {};
+        this.errors = new Errors();
     }
 
     render(){
@@ -105,8 +138,23 @@ class ModelBase {
         });
     }
 
+    validate(){
+        this.errors.clear();
+        validateInstance(this.constructor.schema, this);
+        return this.errors;
+    }
+
+    get valid(){
+        this.validate();
+        return this.errors.empty;
+    }
+
     static get renderable_attributes(){
         return [];
+    }
+
+    static get schema(){
+        return {};
     }
 
     static async create(attributes){
@@ -114,6 +162,7 @@ class ModelBase {
         await inst.save();
         return inst;
     }
+
 }
 
 module.exports = ModelBase;

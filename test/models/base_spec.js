@@ -2,7 +2,8 @@
 
 const DB = require('../support/db_cleaner');
 const BaseModel = require('../../models/base');
-const FakeModel = require('../support/fake_model.js');
+const FakeModel = require('../support/fake_model');
+const Errors = require('../../lib/errors')
 const expect = require('expect.js');
 
 describe('ModelBase', () => {
@@ -167,6 +168,68 @@ describe('ModelBase', () => {
 	describe('persistence', () => {
 		afterEach(async () => {
 			await DB.clean();
+		});
+
+		describe('validations', () => {
+			describe('.schema', () => {
+				it('defaults to an empty hash', () => {
+					expect(BaseModel.schema).to.eql({});
+				});
+
+				it('must be set on the inheriting model', () => {
+					expect(FakeModel.schema).to.eql({
+						name: '',
+						options: {
+							hey: '',
+							now: '',
+							what: {
+								yes: '',
+								no: '',
+								hello: {}
+							}
+
+						}
+					});
+				});
+			});
+
+			describe('#valid', () => {
+				describe('if the instance is not valid', () => {
+					it('returns false and populates #errors', () => {
+						let inst = new FakeModel({name: 1, options: { what: { yes: {}}}})
+						expect(inst.valid).to.not.be.ok();
+						expect(inst.errors.empty).to.not.be.ok();
+					});
+				});
+
+				describe('if the instance is valid', () => {
+					it('returns true and errors remain empty', () => {
+						let inst = new FakeModel({name: 'hello', options: { what: { hello: { anything: 'goes'}}}});
+						expect(inst.valid).to.be.ok();
+						expect(inst.errors.empty).to.be.ok();
+					});
+				});
+			});
+
+			describe('#validate()', () => {
+				describe('if the instance is not valid', () => {
+					it('populates and returns errors', () => {
+						let inst = new FakeModel({name: 1, options: { what: { yes: {}}}})
+						let errs = inst.validate();
+						expect(errs).to.be.an(Errors);
+						expect(errs.empty).to.not.be.ok();
+					});
+				});
+
+				describe('if the insance is valid', () => {
+					it('returns the empty errors object', () => {
+						let inst = new FakeModel({name: 'hello'});
+						let errs = inst.validate();
+						expect(errs).to.be.an(Errors);
+						expect(errs.empty).to.be.ok();
+					});
+				})
+			})
 		});
 
 		describe('#new_record', () => {
