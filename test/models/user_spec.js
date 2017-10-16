@@ -19,6 +19,7 @@ describe('User', () => {
 				let props = {email: 'b@a.com', name: 'a name', password_hash: 'whatever'};
 				await User.create(props);
 				try {
+					props.name = 'name';
 					await User.create(props);
 					expect().fail();
 				} catch(e) {
@@ -57,6 +58,19 @@ describe('User', () => {
 				} catch(e) {
 					expect(e.constructor.name).to.be('RecordInvalid');
 					expect(e.message).to.match(/name/)
+				}
+			});
+
+			it('must be unique', async () => {
+				let props = {email: 'b@a.com', name: 'a name', password_hash: 'whatever'};
+				await User.create(props);
+				try {
+					props.email = 'a@b.com';
+					await User.create(props);
+					expect().fail();
+				} catch(e) {
+					expect(e.constructor.name).to.be('RecordInvalid');
+					expect(e.message).to.match(/name is not valid/);
 				}
 			});
 		})
