@@ -20,28 +20,23 @@ const processRenderableAttributes = (ras, attrs={}) => {
 };
 
 const compare = (schema, attrs, parent_key, errors) => {
-    for(let key in schema){
-        if(attrs.hasOwnProperty(key)) {
-            let expected = Array.isArray(schema[key]) ? 'array' : typeof schema[key];
-            let actual = Array.isArray(attrs[key]) ? 'array' : typeof attrs[key];
-            let error_key = parent_key ? `${parent_key}.${key}` : key;
-
-            if(expected === actual) {
-                if(actual === 'object'){
-                    let expected_keys = Object.getOwnPropertyNames(schema[key]);
-                    if(expected_keys.length > 0){
-                        Object.getOwnPropertyNames(attrs[key]).forEach((k) => { 
-                            if(expected_keys.indexOf(k) === -1){
-                                let inner_error_key = `${error_key}.${k}`;
-                                errors.add(inner_error_key, `is not a permitted key`);
-                            }
-                        }); 
-                    }
-                    compare(schema[key], attrs[key], error_key, errors);
+    let schema_type = Array.isArray(schema) ? 'array' : typeof schema;
+    let attr_type = Array.isArray(attrs) ? 'array' : typeof attrs;
+    if(schema_type !== 'object') {
+        if(schema_type !== attr_type){
+            errors.add(parent_key, `must be a ${schema_type}`);
+        }
+    } else {
+        let expected_keys = Object.getOwnPropertyNames(schema);
+        if(expected_keys.length > 0) {
+            Object.getOwnPropertyNames(attrs).forEach((k) => {
+                let inner_key = parent_key ? `${parent_key}.${k}` : k;
+                if(expected_keys.indexOf(k) === -1){
+                    errors.add(inner_key, 'is not a permitted key');
+                } else {
+                    compare(schema[k], attrs[k], inner_key, errors);
                 }
-            } else {
-                errors.add(error_key, `must be a \`${expected}'`);
-            }
+            })
         }
     }
 };
@@ -54,7 +49,7 @@ const validateInstance = (schema, instance) => {
 class ModelBase {
 
     constructor(attributes = {}){
-        this._attributes = attributes;
+        this._attributes = _.merge({}, attributes);
         this._changes = {};
         this.errors = new Errors();
     }
@@ -131,13 +126,23 @@ class ModelBase {
         this.runHook('before_save');
         
         if(was_new) {
-            return DB.save(this.constructor.column_name, _.merge({}, this._attributes, this._changes)).then((result)=>{
-                this._attributes = _.merge(this._attributes, result.ops[0]);
-                this._changes = {};
-                this.runHook('after_save');
-                if(was_new) this.runHook('after_create');
-                return true;
-            });
+            return DB.save(this.constructor.column_name, _.merge({}, this._attributes, this._changes))
+                .then((result)=>{
+                    this._attributes = _.merge(this._attributes, result.ops[0]);
+                    this._changes = {};
+                    this.runHook('after_save');
+                    if(was_new) this.runHook('after_create');
+                    return true;
+                }).catch((e) => {
+                    if(e.constructor.name === 'DuplicatePropertyError'){
+                        console.log(e.property);
+                        let prop = e.property.replace(/^[^.]+/,'');
+                        this.errors.add(prop, 'must be unique');
+                        throw new RecordInvalid(this, this.errors);
+                    }
+
+                    throw e;
+                });
         }
         this.runHook('before_update');
         return DB.update(this.constructor.column_name, this._id, this._changes).then((result)=> {

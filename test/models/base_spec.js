@@ -273,10 +273,10 @@ describe('ModelBase', () => {
 					let inst = new FakeModel({name: 'wow', options: { hey: 'now'}});
 					await inst.save();
 					inst.set('name', 'shoot');
-					inst.set('options:yes', 'no');
+					inst.set('options.what.yes', 'no');
 					await inst.save();
 					expect(inst.changed).to.be(false);
-					expect(inst.get('options:yes')).to.be('no');
+					expect(inst.get('options.what.yes')).to.be('no');
 					expect(inst.get('name')).to.be('shoot');
 				});
 
