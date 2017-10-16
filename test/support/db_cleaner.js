@@ -4,7 +4,7 @@ const DB = require('../../lib/db');
 
 const deleteCollections = (db, collections) => {
 	return collections.map((collection) => {
-		return collection.remove();
+		return collection.remove({});
 	})
 };
 
