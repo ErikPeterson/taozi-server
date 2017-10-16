@@ -4,6 +4,7 @@ const Errors = require('../lib/errors');
 const DB = require('../lib/db');
 const _ = require('lodash');
 const RecordInvalid = require('./errors/record_invalid');
+const RecordNotFound = require('./errors/record_not_found');
 
 const processRenderableAttributes = (ras, attrs={}) => {
     return ras.reduce((obj, ra) => {
@@ -139,7 +140,8 @@ class ModelBase {
             });
         }
         this.runHook('before_update');
-        return DB.update(this.constructor.column_name, this._id, this._changes).then(()=> {
+        return DB.update(this.constructor.column_name, this._id, this._changes).then((result)=> {
+            if(result.modifiedCount === 0) throw new RecordNotFound({_id: this._id});
             this._attributes = _.merge(this._attributes, this._changes);
             this._changes = {};
             this.runHook('after_save');
@@ -178,6 +180,14 @@ class ModelBase {
         let inst = new this(attributes);
         await inst.save();
         return inst;
+    }
+
+    static async find(_id){
+        return DB.find(this.column_name, _id)
+                .then((attrs) => {
+                    if(!attrs) throw new RecordNotFound(this.name, {_id: _id});
+                    return new this(attrs);
+                })
     }
 
     static get before_validate(){ return []; }

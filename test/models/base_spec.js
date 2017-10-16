@@ -278,7 +278,19 @@ describe('ModelBase', () => {
 					expect(inst.changed).to.be(false);
 					expect(inst.get('options:yes')).to.be('no');
 					expect(inst.get('name')).to.be('shoot');
-				});	
+				});
+
+				it('throws a RecordNotFound error if _id does not exist', async () => {
+					let inst = await FakeModel.create({name: 'wow'});
+					inst.set('name', 'butt');
+					await DB.delete('fake_models', inst._id);
+					try{
+						await inst.save();
+						expect.fail();
+					} catch(e) {
+						expect(e.constructor.name).to.be('RecordNotFound');
+					}
+				});
 			});
 
 			describe('with an invalid record', () => {
@@ -301,6 +313,26 @@ describe('ModelBase', () => {
 				expect(inst.persisted).to.be.ok();
 				expect(inst.get('name')).to.be('hey');
 				expect(inst).to.be.a(FakeModel);
+			});
+		});
+
+		describe('.find(_id)', () => {
+			describe('when the record exists', () => {
+				it('returns the instance', async () => {
+					let inst = await FakeModel.create({name: 'hey'});
+					let inst2 = await FakeModel.find(inst.get('_id'));
+					expect(inst2.render()).to.eql(inst.render());
+				});
+			});
+
+			describe('when the record does not exist', () => {
+				it('throws a RecordNotFound error', async () => {
+					try{
+						await FakeModel.find(1).then(console.log);
+					} catch(e) {
+						expect(e.constructor.name).to.be('RecordNotFound');
+					}
+				})
 			});
 		});
 
