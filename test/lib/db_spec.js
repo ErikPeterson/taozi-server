@@ -35,7 +35,16 @@ describe('DB', () => {
     	});
     });
 
-    describe('.update(collection_name, _id, attributes)', ()=>{
+    describe('.delete(collection_name, _id)', () => {
+        it('deletes a single record', async () => {
+            let result = await DB.save('test_records', {});
+            await DB.delete('test_records', result._id);
+            let newResult = await DB.find('test_records', result._id);
+            expect(newResult).to.be(null);
+        });
+    });
+
+    describe('.update(collection_name, _id, attributes)', () => { 
 
     	it('can update a single record', async () => {
     		let _id = (await DB.save('test_records', {a: 'b'})).insertedIds[0];
@@ -44,5 +53,15 @@ describe('DB', () => {
     		expect(result.modifiedCount).to.be(1);
     	});
 
+    });
+
+    describe('.find(collection_name, _id)', () => {
+        describe('if record exists', () => {
+            it('finds and returns a hash of attributes', async () => {
+                let _id = (await DB.save('test_records', {a: 'b'})).insertedIds[0];
+                let result = await DB.find('test_records', _id);
+                expect(result.a).to.be('b');
+            });
+        });
     });
 });
