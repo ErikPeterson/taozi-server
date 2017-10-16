@@ -307,6 +307,31 @@ describe('ModelBase', () => {
 			});
 		});
 
+		describe('#delete()', () => {
+			describe('on a persisted record', () => {
+				it('deletes the record from the db and removes the _id of the instance', async () => {
+					let inst = await FakeModel.create({name: 'butt'});
+					let _id = inst.get('_id');
+					await inst.delete();
+					expect(inst.persisted).to.not.be.ok();
+					expect(inst.get('_id')).to.be(undefined);
+				});
+			});
+
+			describe('on an unpersisted record', () => {
+				it('throws a RecordNotFound', async () => {
+					let inst = new FakeModel({name: 'butt'});
+					try{
+						await inst.delete();
+						expect.fail();
+					} catch(e) {
+						expect(e.constructor.name).to.be('RecordNotFound');
+						expect(e.message).to.match(/could not find FakeModel with query={}/);
+					}
+				});
+			});
+		});
+
 		describe('.create(attributes)', () => {
 			it('returns a saved new record', async () => {
 				let inst = await FakeModel.create({name: 'hey'});

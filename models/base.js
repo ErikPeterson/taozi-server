@@ -150,6 +150,14 @@ class ModelBase {
         });
     }
 
+    delete(){
+        return DB.delete(this.constructor.column_name, this._id).then((result) => {
+            if(result.deletedCount === 0) throw new RecordNotFound(this.constructor.name, {_id: this._id});
+            delete this._attributes['_id'];
+            return this;
+        });
+    }
+
     validate(){
         this.errors.clear();
         this.runHook('before_validate');
@@ -160,7 +168,7 @@ class ModelBase {
 
     runHook(hook){
         let fns = this.constructor[hook];
-        fns.forEach((fn) => this[fn]() )
+        fns.forEach((fn) => this[fn]());
     }
 
     get valid(){
