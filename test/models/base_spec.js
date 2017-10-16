@@ -134,6 +134,16 @@ describe('ModelBase', () => {
 		});
 	});
 
+	describe('#_unset(property)', () => {
+		it('deletes the selected property from attributes and changes', () => {
+			let inst = new FakeModel({name: 'blah'});
+			expect(inst.get('name')).to.be('blah');
+			inst._unset('name');
+			expect(Object.keys(inst._attributes).indexOf('name')).to.be(-1);
+			expect(Object.keys(inst._changes).indexOf('name')).to.be(-1);
+		})
+	});
+
 	describe('#changed', () => {
 		describe('with an unpersisted record', () => {
 			it('returns false if no attributes have been set after instantiation', () => {

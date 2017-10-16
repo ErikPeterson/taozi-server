@@ -99,6 +99,11 @@ class ModelBase {
         return this;
     }
 
+    _unset(key){
+        delete this._attributes[key];
+        delete this._changes[key];
+    }
+
     get(key){
         let keys = key.split('.');
         let len = keys.length;
