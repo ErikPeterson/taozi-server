@@ -33,6 +33,34 @@ describe('DB', () => {
     		expect(result.result.n).to.be(2);
     		expect(result.ops.length).to.be(2);
     	});
+
+        describe('when the save violates a unique index', () =>{
+            beforeEach(async () => {
+                await DB.save('test_records', {prop: 'a'})
+                        .then(() => {
+                            return DB.connection();
+                        }).then((db) => {
+                            return db.collection('test_records').createIndex({prop: 1}, {name: 'test_records.prop', unique: true});
+                        });
+            });
+
+            afterEach(async () => {
+                return DB.connection().then((db) => {
+                    return db.collection('test_records').dropIndexes();
+                });
+            });
+
+            it('raises a DuplicatePropertyError', async () => {
+                try{
+                    await DB.save('test_records', {prop: 'a'});
+                    expect().fail();
+                } catch (e) {
+                    expect(e.constructor.name).to.be('DuplicatePropertyError');
+                    expect(e.property).to.be('test_records.prop');
+                    expect(e.message).to.match(/test_records.prop must be unique/)
+                }
+            });
+        });
     });
 
     describe('.delete(collection_name, _id)', () => {
@@ -64,4 +92,5 @@ describe('DB', () => {
             });
         });
     });
+
 });
