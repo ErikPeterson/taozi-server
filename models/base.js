@@ -135,7 +135,6 @@ class ModelBase {
                     return true;
                 }).catch((e) => {
                     if(e.constructor.name === 'DuplicatePropertyError'){
-                        console.log(e.property);
                         let prop = e.property.replace(/^[^.]+/,'');
                         this.errors.add(prop, 'must be unique');
                         throw new RecordInvalid(this, this.errors);
