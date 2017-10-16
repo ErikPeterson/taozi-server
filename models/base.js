@@ -127,6 +127,7 @@ class ModelBase {
     async save(){
         await this.validate()
         if(!this.errors.empty) throw new RecordInvalid(this, this.errors);
+
         let was_new = this.new_record;
         if(was_new) {
             await this.runHook('before_create');
@@ -182,7 +183,9 @@ class ModelBase {
 
     async runHook(hook){
         let fns = this.constructor[hook];
-        await Promise.all(fns.map((fn) => Promise.resolve(this[fn]())));
+        for(let fn of fns){
+            await Promise.resolve(this[fn]());
+        }
     }
 
     static get renderable_attributes(){
