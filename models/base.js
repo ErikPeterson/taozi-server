@@ -119,21 +119,24 @@ class ModelBase {
         }
     }
 
-    save(){
-        if(!this.valid) throw new RecordInvalid(this, this.errors);
+    async save(){
+        await this.validate()
+        if(!this.errors.empty) throw new RecordInvalid(this, this.errors);
         let was_new = this.new_record;
-        if(was_new) this.runHook('before_create');
-        this.runHook('before_save');
+        if(was_new) {
+            await this.runHook('before_create');
+        }
+        await this.runHook('before_save');
         
         if(was_new) {
             return DB.save(this.constructor.column_name, _.merge({}, this._attributes, this._changes))
                 .then((result)=>{
                     this._attributes = _.merge(this._attributes, result.ops[0]);
                     this._changes = {};
-                    this.runHook('after_save');
-                    if(was_new) this.runHook('after_create');
-                    return true;
-                }).catch((e) => {
+                    return this.runHook('after_save');
+                }).then(()=>{
+                    return was_new ? this.runHook('after_create') : true;
+                }).then(()=>true).catch((e) => {
                     if(e.constructor.name === 'DuplicatePropertyError'){
                         let prop = e.property.replace(/^[^.]+/,'');
                         this.errors.add(prop, 'must be unique');
@@ -143,13 +146,15 @@ class ModelBase {
                     throw e;
                 });
         }
-        this.runHook('before_update');
-        return DB.update(this.constructor.column_name, this._id, this._changes).then((result)=> {
+        await this.runHook('before_update');
+        return DB.update(this.constructor.column_name, this._id, this._changes).then((result) => {
             if(result.modifiedCount === 0) throw new RecordNotFound({_id: this._id});
             this._attributes = _.merge(this._attributes, this._changes);
             this._changes = {};
-            this.runHook('after_save');
-            this.runHook('after_update');
+            return this.runHook('after_save');
+        }).then(()=>{
+           return this.runHook('after_update');
+        }).then(()=>{
             return true;
         });
     }
@@ -162,22 +167,17 @@ class ModelBase {
         });
     }
 
-    validate(){
+    async validate(){
         this.errors.clear();
-        this.runHook('before_validate');
+        await this.runHook('before_validate');
         validateInstance(this.constructor.schema, this);
-        this.runHook('after_validate');
+        await this.runHook('after_validate');
         return this.errors;
     }
 
-    runHook(hook){
+    async runHook(hook){
         let fns = this.constructor[hook];
-        fns.forEach((fn) => this[fn]());
-    }
-
-    get valid(){
-        this.validate();
-        return this.errors.empty;
+        await Promise.all(fns.map((fn) => Promise.resolve(this[fn]())));
     }
 
     static get renderable_attributes(){

@@ -193,38 +193,20 @@ describe('ModelBase', () => {
 				});
 			});
 
-			describe('#valid', () => {
-				describe('if the instance is not valid', () => {
-					it('returns false and populates #errors', () => {
-						let inst = new FakeModel({name: 1, options: { what: { yes: {}}}})
-						expect(inst.valid).to.not.be.ok();
-						expect(inst.errors.empty).to.not.be.ok();
-					});
-				});
-
-				describe('if the instance is valid', () => {
-					it('returns true and errors remain empty', () => {
-						let inst = new FakeModel({name: 'hello', options: { what: { hello: { anything: 'goes'}}}});
-						expect(inst.valid).to.be.ok();
-						expect(inst.errors.empty).to.be.ok();
-					});
-				});
-			});
-
 			describe('#validate()', () => {
 				describe('if the instance is not valid', () => {
-					it('populates and returns errors', () => {
+					it('populates and returns errors', async () => {
 						let inst = new FakeModel({name: 1, options: { what: { yes: {}}}})
-						let errs = inst.validate();
+						let errs = await inst.validate();
 						expect(errs).to.be.an(Errors);
 						expect(errs.empty).to.not.be.ok();
 					});
 				});
 
 				describe('if the instance is valid', () => {
-					it('returns the empty errors object', () => {
+					it('returns the empty errors object', async () => {
 						let inst = new FakeModel({name: 'hello'});
-						let errs = inst.validate();
+						let errs = await inst.validate();
 						expect(errs).to.be.an(Errors);
 						expect(errs.empty).to.be.ok();
 					});
