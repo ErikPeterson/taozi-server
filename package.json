@@ -4,7 +4,7 @@
   "description": "Backend for Taozi",
   "main": "index.js",
   "scripts": {
-  "test": "NODE_ENV='test' mocha --exit 'test/**/*_spec.js'"
+    "test": "db-migrate up -e test && NODE_ENV='test' mocha --exit 'test/**/*_spec.js'"
   },
   "repository": {
     "type": "git",
@@ -21,6 +21,8 @@
   "homepage": "https://github.com/ErikPeterson/taozi#readme",
   "dependencies": {
     "bcrypt": "^1.0.3",
+    "db-migrate": "^0.10.0-beta.24",
+    "db-migrate-mongodb": "^1.2.3",
     "koa": "^2.3.0",
     "koa-body": "^2.3.0",
     "koa-router": "^7.2.1",
