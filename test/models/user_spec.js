@@ -84,7 +84,7 @@ describe('User', () => {
 					expect().fail();
 				} catch (e) {
 					expect(e.constructor.name).to.be('RecordInvalid');
-					expect(e.message).to.match(/password is not valid/);
+					expect(e.message).to.match(/password.* not valid/);
 				}
 			});
 
@@ -104,5 +104,19 @@ describe('User', () => {
 				expect(user.get('password_hash')).to.be.ok();
 			});
 		});
+
+		describe('password_hash', () => {
+			it('must be present', async () => {
+				let user = await User.create({email: 'a@b.com', name: 'a', password: '123456'});
+				user._unset('password_hash');
+				try{
+					await user.save();
+					expect().fail();
+				} catch (e) {
+					expect(e.constructor.name).to.be('RecordInvalid');
+					expect(e.message).to.match(/password_hash/);
+				}
+			});
+		})
 	});
 });
