@@ -16,7 +16,8 @@ const hashPassword = require('../lib/hash_password');
 class User extends BaseModel {
   static get column_name(){ return 'users'; }
   static get before_validate(){ return ['_validate_email', '_validate_name', '_transform_password', '_validate_password_hash']; }
-
+  static get renderable_attributes(){ return ['email', 'name', '_id']};
+  
   _validate_email(){
     if( (this.new_record || this._changes.email) && !EMAIL_REGEX.test(this.get('email'))) this.errors.add('email', 'must be a valid email address');
   };
