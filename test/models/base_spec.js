@@ -5,6 +5,7 @@ const BaseModel = require('../../models/base');
 const FakeModel = require('../support/fake_model');
 const Errors = require('../../lib/errors')
 const expect = require('expect.js');
+const sinon = require('sinon');
 
 describe('ModelBase', () => {
 	
@@ -108,7 +109,11 @@ describe('ModelBase', () => {
 				describe('and the property has been changed since last save', () => {
 					it('returns the new value', async () => {
 						let inst = new FakeModel({name: 'butt'});
-						await inst.save();
+						try{
+							await inst.save();
+						} catch(e) {
+							console.log(e.full_messages);
+						}
 						inst.set('name', 'bum');
 						expect(inst.get('name')).to.be('bum');
 					});
@@ -129,8 +134,10 @@ describe('ModelBase', () => {
 			let inst = new FakeModel();
 			inst.set('name', 'farfignewton');
 			inst.set('options.hey', 'now');
+			inst.set('options.what.who', {});
 			expect(inst.get('name')).to.be('farfignewton');
 			expect(inst.get('options.hey')).to.be('now');
+			expect(inst.get('options.what.who')).to.eql({});
 		});
 	});
 
@@ -189,6 +196,7 @@ describe('ModelBase', () => {
 				it('must be set on the inheriting model', () => {
 					expect(FakeModel.schema).to.eql({
 						name: '',
+						ids: [],
 						options: {
 							hey: '',
 							now: '',
@@ -206,7 +214,7 @@ describe('ModelBase', () => {
 			describe('#validate()', () => {
 				describe('if the instance is not valid', () => {
 					it('populates and returns errors', async () => {
-						let inst = new FakeModel({name: 1, options: { what: { yes: {}}}})
+						let inst = new FakeModel({name: 1, ids: 1, options: { butt: 1, what: { yes: {}, no: [], hello: {}}}})
 						let errs = await inst.validate();
 						expect(errs).to.be.an(Errors);
 						expect(errs.empty).to.not.be.ok();
@@ -297,6 +305,48 @@ describe('ModelBase', () => {
 					}
 				});
 			});
+
+			describe('when the record violates a unique index', () => {
+				beforeEach(async () => {
+					await DB.connection().then((db) => {
+						return db.collection('fake_models').createIndex({name: 1}, {name: 'fake_models.name', unique: true});
+					});
+				});
+
+				it('raises a RecordInvalid', async () => {
+					let inst = await FakeModel.create({name: 'a name'});
+					try{
+						await FakeModel.create({name: 'a name'});
+						expect().fail();
+					} catch(e) {
+						expect(e.constructor.name).to.be('RecordInvalid');
+						expect(e.message).to.match(/name/);
+					}
+				});
+
+				afterEach(async () => {
+					await DB.connection().then((db) => {
+						return db.collection('fake_models').dropIndexes();
+					});
+				});
+			});
+
+			describe('when the save operation encounters an internal error', () =>{
+				it('re raises the error', async () => {
+					let fn = async () => { throw new Error('whaddap') };
+					let stub = sinon.stub(DB, "connection").callsFake(fn);
+
+					try{
+						await FakeModel.create({name: 'butt'});
+						expect().fail();
+					} catch (e) {
+						expect(e.constructor.name).to.be('Error')
+						expect(e.message).to.be('whaddap');
+					}
+
+					stub.restore();
+				});
+			})
 		});
 
 		describe('#delete()', () => {
@@ -367,6 +417,19 @@ describe('ModelBase', () => {
 				await inst.save();
 				expect(inst.before_update_called - inst.before_create_called).to.be.greaterThan(0);
 				expect(inst.after_update_called - inst.after_save_called).to.be.greaterThan(0);
+			});
+
+			it('are all blank by default', () => {
+				[
+				 'before_validate', 
+				 'after_validate', 
+				 'before_save', 
+				 'after_save', 
+				 'before_update', 
+				 'after_update', 
+				 'before_create', 
+				 'after_create'
+				].forEach((k) => expect(BaseModel[k]).to.eql([]))
 			});
 		});
 

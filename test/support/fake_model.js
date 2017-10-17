@@ -78,6 +78,7 @@ class FakeModel extends ModelBase {
 	static get schema(){
 		return {
 					name: '',
+					ids: [],
 					options: {
 						hey: '',
 						now: '',

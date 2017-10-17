@@ -115,7 +115,7 @@ class ModelBase {
             let memo2 = this._changes;
             let i = 0;
             for( let k of keys) {
-                if(memo2[k] === memo1[k] === undefined) return undefined;
+                if(memo2[k] === memo1[k] && memo1[k] === undefined) return undefined;
                 if(i === len - 1) return memo2[k] || memo1[k];
                 memo1 = memo1[k] || {};
                 memo2 = memo2[k] || {};
@@ -141,7 +141,7 @@ class ModelBase {
                     this._changes = {};
                     return this.runHook('after_save');
                 }).then(()=>{
-                    return was_new ? this.runHook('after_create') : true;
+                    return this.runHook('after_create');
                 }).then(()=>true).catch((e) => {
                     if(e.constructor.name === 'DuplicatePropertyError'){
                         let prop = e.property.replace(/^[^.]+/,'');
