@@ -25,6 +25,11 @@ describe('logger(opts)', () => {
 		logger.transport = transport;
 	});
 
+	it('defaults to console as transport', () => {
+		let loggeria = _logger().logger;
+		expect(loggeria.transport).to.be(console);
+	});
+
 	it('can set the transport', () => {
 		expect(logger.transport).to.be(transport);
 	});
@@ -57,29 +62,90 @@ describe('logger(opts)', () => {
 			expect(logger.constructor.name).to.be('Logger');
 		});
 
-		it('responds to log(level, message)', () => {
-			logger.log('debug', 'my message');
-			expect(transport._log[0]).to.match(/\[DEBUG\]  my message/);
-			logger.log('error', 'some error');
-			expect(transport._error[0]).to.match(/\[ERROR\]  some error/);
+		describe('#log(level, message)', () => {
+			it('logs the message at level', () => {
+				logger.log('debug', 'my message');
+				expect(transport._log[0]).to.match(/\[DEBUG\]  my message/);
+				logger.log('error', 'some error');
+				expect(transport._error[0]).to.match(/\[ERROR\]  some error/);
+			});
+
+			it('defaults to INFO', () => {
+				logger.log(undefined, 'my message');
+				expect(transport._log[0]).to.match(/\[INFO\]  my message/);
+			});
+
+			it('does nothing if index is below LOG_LEVEL', () => {
+				logger.log('FAKE LEVEL', 'message');
+				expect(transport._log).to.be.empty();
+			})
+
 		});
 
-		it('responds to debug, info, warn', () => {
-			['DEBUG', 'INFO', 'WARN'].forEach((level) => {
-				logger[level.toLowerCase()]('message');
-				expect(transport._log[transport._log.length - 1]).to.match(new RegExp(`\\[${level}\\]  message`));
+		describe('#debug(message), #info(message), #warn(message)', () => {
+			it('passes message to log', () => {
+				['DEBUG', 'INFO', 'WARN'].forEach((level) => {
+					logger[level.toLowerCase()]('message');
+					expect(transport._log[transport._log.length - 1]).to.match(new RegExp(`\\[${level}\\]  message`));
+				});
 			});
 		});
 
-		it('responds to error(message, err)', () => {
-			let error = {
-				message: 'my message',
-				stack: ['stackity stacks', 'dont talk back']
-			}
-			logger.error('butt', error);
-			expect(transport._error[0]).to.match(/\[ERROR\]  my message/);
-			expect(transport._error[0]).to.match(/stackity stacks/);
-			expect(transport._error[0]).to.match(/dont talk back/);
+		describe('#error(message, err)', () => {
+
+			it('processes the provided error into a message', () => {
+				let error = {
+					message: 'my message',
+					stack: ['stackity stacks', 'dont talk back']
+				}
+				logger.error('butt', error);
+				expect(transport._error[0]).to.match(/\[ERROR\]  my message/);
+				expect(transport._error[0]).to.match(/stackity stacks/);
+				expect(transport._error[0]).to.match(/dont talk back/);
+			});
+
+			it('does not require the error object to be an actual error', () => {
+				let error = {
+					message: 'my message'
+				};
+
+				logger.error('butt', error);
+				expect(transport._error[0]).to.match(/\[ERROR\]  my message/);
+			});
+
+			it('does not require an error object', () => {
+				logger.error('butt butt');
+				expect(transport._error[0]).to.match(/\[ERROR\]  butt butt/);
+			});
+
 		});
+
+		describe('#fatal(message, err)', () => {
+			it('processes the provided error into a message', () => {
+				let error = {
+					message: 'my message',
+					stack: ['stackity stacks', 'dont talk back']
+				}
+				logger.fatal('butt', error);
+				expect(transport._error[0]).to.match(/\[FATAL\]  my message/);
+				expect(transport._error[0]).to.match(/stackity stacks/);
+				expect(transport._error[0]).to.match(/dont talk back/);
+			});
+
+			it('does not require the error object to be an actual error', () => {
+				let error = {
+					message: 'my message'
+				};
+
+				logger.fatal('butt', error);
+				expect(transport._error[0]).to.match(/\[FATAL\]  my message/);
+			});
+
+			it('does not require an error object', () => {
+				logger.fatal('butt butt');
+				expect(transport._error[0]).to.match(/\[FATAL\]  butt butt/);
+			});
+		});
+
 	});
 });

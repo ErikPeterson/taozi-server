@@ -2,6 +2,7 @@
 
 const expect = require('expect.js');
 const DB = require('../support/db_cleaner.js');
+const sinon = require('sinon');
 
 describe('DB', () => {
 	before(async () => {
@@ -59,6 +60,25 @@ describe('DB', () => {
                     expect(e.property).to.be('test_records.prop');
                     expect(e.message).to.match(/test_records.prop must be unique/)
                 }
+            });
+        });
+
+        describe('when the save operation raises any other error', () => {
+            it('reraises the error', async () => {
+                let fn =  async () => {
+                    throw new Error('my error');
+                };
+
+                let stub = sinon.stub(DB, 'connection').callsFake(fn);
+
+                try{
+                    await DB.save('test_records', {prop: 'a'});
+                    expect().fail();
+                } catch (e) {
+                    expect(e.message).to.be('my error');
+                }
+
+                stub.restore();
             });
         });
     });

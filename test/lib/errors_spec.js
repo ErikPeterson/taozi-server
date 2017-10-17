@@ -48,6 +48,11 @@ describe('Errors', ()=>{
 	});
 
 	describe('#short_message', () => {
+		it('returns undefined for an empty errors object', () => {
+			let errors = new Errors();
+			expect(errors.short_message).to.not.be.ok();
+		});
+
 		it('returns a short summary of the errors', ()=>{
 			let errors = new Errors();
 			errors.add('butt', 'is bad');
