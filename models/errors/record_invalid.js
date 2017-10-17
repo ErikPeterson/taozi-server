@@ -7,8 +7,19 @@ class RecordInvalid extends Error{
 		this.errors = errors;
 	}
 
+	toJSON(){
+		return {
+			type: 'RecordInvalid',
+			messages: this.full_messages
+		}
+	}
+
 	get full_messages(){
 		return this.errors.full_messages;
+	}
+
+	get status(){
+		return 400;
 	}
 }
 

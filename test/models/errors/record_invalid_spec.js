@@ -14,6 +14,8 @@ describe('RecordInvalid', () => {
 			expect(inst.errors).to.be(err.errors);
 			expect(err.full_messages).to.eql(err.errors.full_messages);
 			expect(err.message).to.eql(err.errors.short_message);
+			expect(err.status).to.be(400);
+			expect(err.toJSON()).to.eql({type: 'RecordInvalid', messages: err.full_messages })
 		});
 	});
 });
