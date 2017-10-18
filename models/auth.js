@@ -1,7 +1,6 @@
 'use strict';
 
 const BaseModel = require('./base');
-const getToken = require('../lib/get_token');
 const User = require('./user');
 
 class Auth extends BaseModel {
@@ -23,7 +22,7 @@ class Auth extends BaseModel {
 		let token;
 
 		while(!token){
-			let temp = await getToken();
+			let temp = await require('../lib/get_token')();
 			let exists = await Auth.exists({token: temp});
 			if(!exists) token = temp;
 		}
@@ -38,7 +37,7 @@ class Auth extends BaseModel {
 		if(!user) await auth.save();
 		auth.set('user_id', user.get('_id').toString());
 
-		try{ await auth.save();} catch(e) { console.log(e.full_messages); }
+		await auth.save();
 		return auth;
 	}
 

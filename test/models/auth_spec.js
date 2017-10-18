@@ -5,6 +5,7 @@ const Auth = require('../../models/auth');
 const User = require('../../models/user');
 const DB = require('../support/db_cleaner');
 const _ = require('lodash');
+const mock = require('mock-require');
 
 describe('Auth', () => {
 	before(async () => {
@@ -43,6 +44,25 @@ describe('Auth', () => {
 				let auth = await Auth.create(props);
 				expect(auth.get('created_at')).to.be.ok();
 			});
+		});
+	});
+
+	describe('#_set_token()', () => {
+		it('will skip any extant tokens', async () => {
+			let i = 0;
+			mock('../../lib/get_token', async () => {
+				let token = i == 0 ? '1234' : '12345';
+				i++;
+				return token;
+			});
+
+			await DB.save('auths', {token: '1234'});
+
+			let inst = new Auth();
+			await inst._set_token();
+			expect(inst.get('token')).to.be('12345');
+			expect(i).to.be(2);
+			mock.stopAll();
 		});
 	});
 
