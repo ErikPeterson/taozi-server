@@ -81,6 +81,9 @@ describe('/users', () => {
 				let resp = await API.post('/users/auth', {auth: {email: 'a@b.com', password: password}});
 				expect(resp.statusCode).to.be(401);
 				expect(resp.body.errors[0]).to.eql({type: 'Unauthorized', messages: ['no user with those credentials could be found']});
+				let resp2 = await API.post('/users/auth', {auth: {email: 'e@p.com', password: '12345'}});
+				expect(resp2.statusCode).to.be(401);
+				expect(resp2.body.errors[0]).to.eql({type: 'Unauthorized', messages: ['no user with those credentials could be found']});
 			});
 		});
 
