@@ -113,4 +113,14 @@ describe('DB', () => {
         });
     });
 
+    describe('.exists(collection_name, query)', () => {
+        describe('if a record matching query exists', () => {
+            it('returns true', async () => {
+                await DB.save('test_records', {a: 'b'});
+                let result = await DB.exists('test_records', {a: 'b'});
+                expect(result).to.be.ok();
+            })
+        })
+    });
+
 });
