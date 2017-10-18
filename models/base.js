@@ -204,6 +204,10 @@ class ModelBase {
         return inst;
     }
 
+    static async exists(query){
+        return DB.exists(this.column_name, query);
+    }
+
     static async find(_id){
         return DB.find(this.column_name, _id)
                 .then((attrs) => {

@@ -186,6 +186,21 @@ describe('ModelBase', () => {
 		});
 	});
 
+	describe('finders', () => {
+		describe('.exists(query)', () => {
+			it('returns true if any records matching the query exist', async () => {
+				let inst = await FakeModel.create({name: 'name'});
+				let exists = await FakeModel.exists({name: 'name'});
+				expect(exists).to.be.ok();
+			});
+
+			it('returns false if no records matching the query exist', async () => {
+				let exists = await FakeModel.exists({name: 'name'});
+				expect(exists).to.not.be.ok();
+			});
+		});
+	});
+
 	describe('persistence', () => {
 
 		describe('validations', () => {
