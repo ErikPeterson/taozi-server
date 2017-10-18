@@ -5,6 +5,9 @@ const router = new Router();
 
 const apps = ['users.js'];
 
-apps.forEach((app) => require(`./${app}`)(router) );
+module.exports = (logger) => {
 
-module.exports = router;
+	apps.forEach((app) => require(`./${app}`)(router, logger));
+	
+	return router;
+};

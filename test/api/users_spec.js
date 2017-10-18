@@ -14,7 +14,8 @@ describe('/users', () => {
 		await DB.clean();
 	});
 
-	describe('POST {user : {email, name, password} }', () => {
+
+	describe('POST / {user : {email, name, password} }', () => {
 		describe('with all required params', () => {
 			it('responds with a new user', async () => {
 				let params = { 
@@ -52,6 +53,31 @@ describe('/users', () => {
 				let resp = await API.post('/users', {user: props});
 				expect(resp.statusCode).to.be(400);
 				expect(resp.body.errors[0].type).to.be('RecordInvalid');
+			});
+		});
+	});
+
+	describe('POST /auth { user: { email, password} }', () => {
+		let props = {name:'hey', email: 'e@p.com', password: '123456'};
+		
+		beforeEach(async () => {
+			await User.create(props);
+		});
+
+		describe('with the correct email and password for a taozi user', () => {
+			it('responds with 201 and an auth token', async () => {
+				let resp = await API.post('/users/auth', {auth: {email: 'e@p.com', password: '123456'}});
+				expect(resp.statusCode).to.be(201);
+				expect(resp.body.auth.token).to.be.ok();
+			});
+		});
+
+		describe('with incorrect or missing credentials', () => {
+			it('responds with 401 and an error', async () => {
+				let password = props.password;
+				let resp = await API.post('/users/auth', {auth: {email: 'a@b.com', password: password}});
+				expect(resp.statusCode).to.be(401);
+				expect(resp.body.errors[0]).to.eql({type: 'Unauthorized', messages: ['no user with those credentials could be found']});
 			});
 		});
 	});
