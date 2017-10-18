@@ -13,6 +13,4 @@ app.use(catchErrors);
 const router = require('./routes/router.js')(logger);
 app.use(router.routes());
 
-app.listen(process.env.port || 3000);
-
 module.exports = app;
