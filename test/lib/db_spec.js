@@ -113,6 +113,22 @@ describe('DB', () => {
         });
     });
 
+    describe('.where(collection_name, query, limit)', () => {
+        it('returns all matching records', async () => {
+            await DB.save('test_records', [{name: 'a'}, {name: 'a'}]);
+            let res = await DB.where('test_records', {name: 'a'});
+            expect(res.length).to.be(2);
+        });
+
+        describe('with a limit', () => {
+            it('returns only a single matching record', async () => {
+                await DB.save('test_records', [{name: 'a'}, {name: 'a'}]);
+                let res = await DB.where('test_records', {name: 'a'}, 1);
+                expect(res.length).to.be(1);
+            });
+        });
+    });
+
     describe('.exists(collection_name, query)', () => {
         describe('if a record matching query exists', () => {
             it('returns true', async () => {
