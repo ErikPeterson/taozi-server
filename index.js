@@ -4,25 +4,13 @@ const Koa = require('koa');
 const app = new Koa();
 
 const {logger, middleware} = require('./lib/logger')();
+const catchErrors = require('./lib/catch_errors')(logger);
 
 app.use(middleware);
 
-app.use(async (ctx, next)=> {
-    try {
-        await next();
-    } catch(e) {
-        logger.error('', e);
-        ctx.status = e.status || 500;
-        if(e.toJSON){
-        	ctx.body = {errors: [e.toJSON()]}
-        } else {
-        	ctx.body = {errors: [{type: 'Error', messages: [e.message]}]}
-        }
-        ctx.app.emit('error', e, ctx);
-    }
-});
+app.use(catchErrors);
 
-const router = require('./routes/router.js');
+const router = require('./routes/router.js')(logger);
 app.use(router.routes());
 
 app.listen(process.env.port || 3000);
