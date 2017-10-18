@@ -76,9 +76,11 @@ describe('logger(opts)', () => {
 			});
 
 			it('does nothing if index is below LOG_LEVEL', () => {
-				logger.log('FAKE LEVEL', 'message');
+				process.env.LOG_LEVEL = 6;
+				logger.log('INFO', 'message');
+				delete process.env.LOG_LEVEL;
 				expect(transport._log).to.be.empty();
-			})
+			});
 
 		});
 
