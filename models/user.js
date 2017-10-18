@@ -9,74 +9,47 @@
 */
 
 const bcrypt = require('bcrypt');
-const Errors = require('../lib/errors');
-const DB = require('../lib/db');
-
-const CREATABLE_ATTRIBUTES = ['name', 'password_hash', 'email'];
-const UPDATABLE_ATTRIBUTES = CREATABLE_ATTRIBUTES;
-const RENDERABLE_ATTRIBUTES = ['name', 'email', 'id'];
 const EMAIL_REGEX = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+const BaseModel = require('./base');
+const hashPassword = require('../lib/hash_password');
 
-class User {
+class User extends BaseModel {
+  static get column_name(){ return 'users'; }
+  static get before_validate(){ return ['_validate_email', '_validate_name', '_transform_password', '_validate_password_hash']; }
+  static get renderable_attributes(){ return ['email', 'name', '_id']};
+  
+  _validate_email(){
+    if( (this.new_record || this._changes.email) && !EMAIL_REGEX.test(this.get('email'))) this.errors.add('email', 'must be a valid email address');
+  };
 
-  constructor(attributes){
-    this._attributes = attributes;
-    this.errors = new Errors();
+  _validate_name(){
+    if( (this.new_record || this._changes.name) && !this.get('name')) this.errors.add('name', 'must be present');
   }
 
-  async setPasswordHash(){
-    this._attributes.password_hash = await bcrypt.hash(this._attributes.password, 10);
+  _validate_password_hash(){
+    if(!this.get('password_hash')) this.errors.add('password_hash', 'must be present');
   }
 
-  render(){
-    return RENDERABLE_ATTRIBUTES.reduce((obj, attr) => { obj[attr] = this._attributes[attr]; return obj;}, {})
-  }
+  async _transform_password(){
+    let password = this.get('password');
+    this._unset('password');
 
-  validatePassword(){
-    if(this._attributes.password.length < 8) this.errors.add("password", "must be at least 8 characters");
-    let reg = new RegExp(`#{this._attributes.name}|#{this._attributes.email}`);
-    if(reg.test(this._attributes.password)) this.errors.add("password", "may not contain your name or email");
-  }
-
-  validateName(){
-    if(/^\s+$/.test(this._attributes.name)) this.errors.add("name", "may not be empty");
-    if(this._attributes.name.length > 32) this.errors.add("name", "must 32 characters or fewer");
-  }
-
-  validateEmail(){
-    if(/^\s+$/.test(this._attributes.email)) this.errors.add("email", "may not be empty");
-    if(!EMAIL_REGEX.test(this._attributes.email)) this.errors.add("email", "must be a valid email address");
-  }
-
-  validate(){
-    this.validatePassword();
-    this.validateName();
-    this.validateEmail();
-    return this.errors.empty();
-  }
-
-  persisted(){
-    return this._persisted;
-  }
-
-  _attributes_for_save(){
-    return CREATABLE_ATTRIBUTES.reduce((obj, attr) => { obj[attr] = this._attributes[attr]; return obj;}, {})
-  }
-
-  async save(){
-    if(this.validate()){
-        await DB.save('users', this._attributes_for_save());
-        this._persisted = true;
-    } else {
-        this._persisted = false;
+    if(this.new_record && !password) return this.errors.add('password', 'must be present for new users');
+    if(password){
+        if(password.length < 6) return this.errors.add('password', 'must be at least 6 characters');
+        return hashPassword(password).then((hash) => {
+          this.set('password_hash', hash);
+        });
     }
+
   }
 
-  static async create(attributes){
-    let user = new User(attributes);
-    await user.setPasswordHash();
-    await user.save();
-    return user;
+  static get schema(){
+    return {
+      name: '',
+      email: '',
+      password_hash: ''
+    };
   }
 }
 

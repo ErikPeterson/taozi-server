@@ -1,0 +1,5 @@
+{
+	"development": "mongodb://localhost:27017/taozi-development",
+	"test": "mongodb://localhost:27017/taozi-test",
+	"production": {"ENV": "DATABASE_URL"}
+}
