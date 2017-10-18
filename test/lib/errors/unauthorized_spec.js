@@ -8,7 +8,11 @@ describe('Unauthorized', () => {
 		it('returns an instance of Unauthorized', () => {
 			let err = new Unauthorized('wow so unauthorized');
 			expect(err.status).to.be(401);
-			expect(err.message).to.be('wow so unauthorized')
+			expect(err.message).to.be('wow so unauthorized');
+			expect(err.toJSON()).to.eql({
+				type: 'Unauthorized',
+				messages: ['wow so unauthorized']
+			})
 		});
 	})
 })
