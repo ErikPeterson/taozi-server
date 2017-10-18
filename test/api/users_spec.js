@@ -4,6 +4,9 @@ const expect = require('expect.js');
 const API = require('../support/api');
 const DB = require('../support/db_cleaner');
 const User = require('../../models/user');
+const sinon = require('sinon');
+
+const Auth = require('../../models/auth');
 
 describe('/users', () => {
 	before(async () => {
@@ -80,5 +83,23 @@ describe('/users', () => {
 				expect(resp.body.errors[0]).to.eql({type: 'Unauthorized', messages: ['no user with those credentials could be found']});
 			});
 		});
+
+		describe('when a non auth related error occures', () => {
+
+			beforeEach(function(){
+				this.stub = sinon.stub(Auth, 'createByCredentials').callsFake(async () => { throw new Error('butt')});
+			});
+
+			it('reraises', async () => {
+				let resp = await API.post('/users/auth', {auth: {email: 'e@p.com', password: '123456'}});
+				expect(resp.statusCode).to.be(500);
+				expect(resp.body.errors[0]).to.eql({type: 'Error', messages: ['butt']});
+			});
+
+			afterEach(function(){
+				console.log('run');
+				this.stub.restore();
+			});
+		})
 	});
 });
