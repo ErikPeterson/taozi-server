@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "db-migrate up -e test && NODE_ENV='test' nyc --reporter=html mocha --exit 'test/**/*_spec.js'",
-    "testci": "db-migrate up -e test && istanbul cover ./node_modules/mocha/bin/_mocha --exit --report lcovonly -- -R spec && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage"
+    "testci": "db-migrate up -e test && nyc mocha --exit 'test/**/*_spec.js' && nyc report --reporter=text-lcov | coveralls"
   },
   "repository": {
     "type": "git",
