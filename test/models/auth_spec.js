@@ -67,13 +67,33 @@ describe('Auth', () => {
 	});
 
 	describe('.createByCredentials({email, password})', () => {
-		describe('if a user with these crendentials exists', async () => {
+		describe('if a user with these crendentials exists', () => {
 			it('returns an auth object', async () => {
 				let user = await User.create({email: 'a@b.com', name:'a', password: '123456'});
 				let auth = await Auth.createByCredentials({email: 'a@b.com', password: '123456'});
 				expect(auth).to.be.an(Auth);
 				expect(auth.get('token')).to.be.ok();
 				expect(auth.get('user_id')).to.be(user.get('_id').toString());
+			});
+		});
+
+		describe('if a user with thise credentials does not exist', () => {
+			it('raises an error', async () => {
+				let user = await User.create({email: 'a@b.com', name:'a', password: '123456'});
+				
+				try{
+					await Auth.createByCredentials({});
+					expect().fail();
+				} catch(e){
+					expect(e.constructor.name).to.be('RecordInvalid');
+				}
+
+				try{
+					await Auth.createByCredentials({email: 'a@b.com', password: 'butt'});
+					expect().fail();
+				} catch(e) {
+					expect(e.constructor.name).to.be('RecordInvalid');
+				}
 			});
 		});
 	});

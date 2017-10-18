@@ -35,6 +35,9 @@ class Auth extends BaseModel {
 		let users = await User.where({email: creds.email}, 1);
 		let user = users[0];
 		if(!user) await auth.save();
+		let authenticated = await user.authenticate(creds.password);
+		if(!authenticated) await auth.save();
+		
 		auth.set('user_id', user.get('_id').toString());
 
 		await auth.save();
