@@ -5,6 +5,7 @@ const DB = require('../lib/db');
 const _ = require('lodash');
 const RecordInvalid = require('./errors/record_invalid');
 const RecordNotFound = require('./errors/record_not_found');
+const RecordIsReadOnly = require('./errors/record_is_read_only');
 
 const processRenderableAttributes = (ras, attrs={}) => {
     return ras.reduce((obj, ra) => {
@@ -125,6 +126,7 @@ class ModelBase {
     }
 
     async save(){
+        if(this.constructor.read_only && !this.new_record) throw new RecordIsReadOnly(this);
         await this.validate()
         if(!this.errors.empty) throw new RecordInvalid(this, this.errors);
 
@@ -218,7 +220,6 @@ class ModelBase {
     static get after_create(){ return []; }
     static get before_update(){ return []; }
     static get after_update(){ return []; }
-
 }
 
 module.exports = ModelBase;

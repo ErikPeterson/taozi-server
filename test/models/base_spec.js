@@ -13,6 +13,10 @@ describe('ModelBase', () => {
 		await DB.clean();
 	});
 
+	afterEach(async () => {
+		await DB.clean();
+	});
+
 	describe('.column_name', () => {
 		it('defaults to undefined', () => {
 			expect(BaseModel.column_name).to.be(undefined);
@@ -183,9 +187,6 @@ describe('ModelBase', () => {
 	});
 
 	describe('persistence', () => {
-		afterEach(async () => {
-			await DB.clean();
-		});
 
 		describe('validations', () => {
 			describe('.schema', () => {
@@ -269,6 +270,27 @@ describe('ModelBase', () => {
 			});
 
 			describe('with a persisted record', () => {
+				describe('if class is read only', () => {
+					beforeEach(()=>{
+						FakeModel.read_only = true;
+					});
+
+					it('raises a RecordIsReadOnly', async () => {
+						let inst = await FakeModel.create({name: 'wow'});
+						try{
+							inst.set('name', 'butt');
+							await inst.save();
+							expect().fail();
+						} catch(e) {
+							expect(e.constructor.name).to.be('RecordIsReadOnly');
+						}
+					});
+
+					afterEach(()=>{
+						FakeModel.read_only = false;
+					});
+				});
+
 				it('updates the appropriate record', async () => {
 					let inst = new FakeModel({name: 'wow', options: { hey: 'now'}});
 					await inst.save();
