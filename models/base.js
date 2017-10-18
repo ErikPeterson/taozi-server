@@ -216,6 +216,13 @@ class ModelBase {
                 })
     }
 
+    static async where(query, limit){
+        return DB.where(this.column_name, query, limit)
+                .then((results) => {
+                    return results.map((res) => new this(res));
+                })
+    }
+
     static get before_validate(){ return []; }
     static get after_validate(){ return []; }
     static get before_save(){ return []; }

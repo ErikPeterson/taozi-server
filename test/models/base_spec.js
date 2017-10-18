@@ -187,6 +187,48 @@ describe('ModelBase', () => {
 	});
 
 	describe('finders', () => {
+
+		describe('.find(_id)', () => {
+			describe('when the record exists', () => {
+				it('returns the instance', async () => {
+					let inst = await FakeModel.create({name: 'hey'});
+					let inst2 = await FakeModel.find(inst.get('_id'));
+					expect(inst2.render()).to.eql(inst.render());
+				});
+			});
+
+			describe('when the record does not exist', () => {
+				it('throws a RecordNotFound error', async () => {
+					try{
+						await FakeModel.find(1).then(console.log);
+					} catch(e) {
+						expect(e.constructor.name).to.be('RecordNotFound');
+					}
+				})
+			});
+		});
+
+		describe('.where(query, limit)', () => {
+			it('returns all matching data', async () => {
+				let inst = await FakeModel.create({name: 'hey'});
+				let inst2 = await FakeModel.create({name: 'hey'});
+
+				let results = await FakeModel.where({name: 'hey'});
+				expect(results.length).to.be(2);
+				expect(results[0]).to.be.a(FakeModel);
+			});
+
+			describe('with a limit', () => {
+				it('returns only n matching records', async () => {
+					let inst = await FakeModel.create({name: 'hey'});
+					let inst2 = await FakeModel.create({name: 'hey'});
+
+					let results = await FakeModel.where({name: 'hey'}, 1);
+					expect(results.length).to.be(1);
+				});
+			});
+		});
+
 		describe('.exists(query)', () => {
 			it('returns true if any records matching the query exist', async () => {
 				let inst = await FakeModel.create({name: 'name'});
@@ -417,26 +459,6 @@ describe('ModelBase', () => {
 				expect(inst.persisted).to.be.ok();
 				expect(inst.get('name')).to.be('hey');
 				expect(inst).to.be.a(FakeModel);
-			});
-		});
-
-		describe('.find(_id)', () => {
-			describe('when the record exists', () => {
-				it('returns the instance', async () => {
-					let inst = await FakeModel.create({name: 'hey'});
-					let inst2 = await FakeModel.find(inst.get('_id'));
-					expect(inst2.render()).to.eql(inst.render());
-				});
-			});
-
-			describe('when the record does not exist', () => {
-				it('throws a RecordNotFound error', async () => {
-					try{
-						await FakeModel.find(1).then(console.log);
-					} catch(e) {
-						expect(e.constructor.name).to.be('RecordNotFound');
-					}
-				})
 			});
 		});
 
