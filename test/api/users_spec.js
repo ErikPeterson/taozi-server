@@ -45,7 +45,7 @@ describe('/users', () => {
 				let params = {user: {}};
 				let resp = await API.post('/users', params);
 				expect(resp.statusCode).to.be(400);
-				expect(resp.body.errors[0]).to.eql({ type: 'RecordInvalid', messages: [ 'email must be a valid email address', 'name must be present', 'password must be present for new users','password_hash must be present']});
+				expect(resp.body.errors[0]).to.eql({ type: 'RecordInvalid', messages: [ 'email must be a valid email address', 'name must be present', 'password must be present for new users','password_hash must be present', 'display_name must be at least 1 character', 'display_name must be a string']});
 			});
 		});
 
