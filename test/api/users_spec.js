@@ -103,6 +103,13 @@ describe('/users', () => {
 			expect(u2.get('password_hash')).not.be(hash);
 		});
 
+		describe('when no user with the specified name exists', async () => {
+			it('responds with a 403', async () => {
+				let resp = await API.post('/users/what', {user: {name: 'huh'}},  {'Authorization': `Bearer ${auth.get('token')}`});
+				expect(resp.statusCode).to.be(403);
+			});
+		});
+
 		describe('with no auth token', async () => {
 			it('responds with a 401', async () => {
 				let resp = await API.post('/users/hey', {user: {name: 'butt'}});

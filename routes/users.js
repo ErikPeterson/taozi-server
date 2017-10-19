@@ -29,8 +29,7 @@ module.exports = (router, logger) => {
 		let users = await User.where({name: name}, 1);
 		let user = users[0];
 
-		if(!user) throw new NotFound('no user with that name could be found');
-		if(user.get('_id').toString() !== ctx.current_user_id) throw new Forbidden('the authenticated user does not have permission to modify this resource');
+		if(!user || user.get('_id').toString() !== ctx.current_user_id) throw new Forbidden('the authenticated user does not have permission to modify this resource');
 
 		let updateParams = ctx.request.params.require('user')
 							.permit('email', 'password', 'name', 'avatar_url').value();
