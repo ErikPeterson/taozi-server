@@ -9,21 +9,32 @@
 */
 
 const EMAIL_REGEX = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+const NAME_REGEX = /[^aA-zZ_]/
 const BaseModel = require('./base');
 const hashPassword = require('../lib/hash_password');
 const comparePassword = require('../lib/compare_password');
 
 class User extends BaseModel {
   static get column_name(){ return 'users'; }
-  static get before_validate(){ return ['_validate_email', '_validate_name', '_transform_password', '_validate_password_hash', '_validate_bio']; }
-  static get renderable_attributes(){ return ['email', 'name', '_id', 'avatar_url']};
+  static get before_validate(){ return ['_validate_email', '_validate_name', '_transform_password', '_validate_password_hash', '_validate_bio', '_validate_display_name']; }
+  static get renderable_attributes(){ return ['email', 'name', '_id', 'avatar_url', 'bio', 'display_name']};
   
   _validate_email(){
     if( (this.new_record || this._changes.email) && !EMAIL_REGEX.test(this.get('email'))) this.errors.add('email', 'must be a valid email address');
   };
 
   _validate_name(){
-    if( (this.new_record || this._changes.name) && !this.get('name')) this.errors.add('name', 'must be present');
+    let name = this.get('name');
+
+    if(!name) return this.errors.add('name', 'must be present');
+    if(name.length >= 23) this.errors.add('name', 'must be 22 characters or fewer');
+    if(NAME_REGEX.test(name)) this.errors.add('name', 'may contain only alphanumeric characters and _')
+  }
+
+  _validate_display_name(){
+    if(!this.get('display_name')) this.set('display_name', this.get('name'));
+    if(!this.get('display_name')) return this.errors.add('display_name', 'must be at least 1 character');
+    if(this.get('display_name').length > 200) this.errors.add('display_name', 'must be 200 characters or fewer');
   }
 
   _validate_password_hash(){
@@ -58,7 +69,8 @@ class User extends BaseModel {
       email: '',
       password_hash: '',
       avatar_url: '',
-      bio: ''
+      bio: '',
+      display_name: ''
     };
   }
 }

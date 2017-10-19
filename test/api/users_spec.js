@@ -24,7 +24,7 @@ describe('/users', () => {
 				let params = { 
 					user: {
 						email: 'e@p.com',
-						name: 'some name',
+						name: 'somename',
 						password: '123456'
 					}
 				};
@@ -37,6 +37,8 @@ describe('/users', () => {
 				expect(resp.body.user.name).to.be(params.user.name);
 				expect(resp.body.user.password).to.not.be.ok();
 				expect(resp.body.user.password_hash).to.not.be.ok();
+				expect(resp.body.user.display_name).to.be.ok();
+				expect(resp.body.user.bio).to.not.be.ok();
 			});
 		});
 
@@ -45,7 +47,7 @@ describe('/users', () => {
 				let params = {user: {}};
 				let resp = await API.post('/users', params);
 				expect(resp.statusCode).to.be(400);
-				expect(resp.body.errors[0]).to.eql({ type: 'RecordInvalid', messages: [ 'email must be a valid email address', 'name must be present', 'password must be present for new users','password_hash must be present']});
+				expect(resp.body.errors[0]).to.eql({ type: 'RecordInvalid', messages: [ 'email must be a valid email address', 'name must be present', 'password must be present for new users','password_hash must be present', 'display_name must be at least 1 character', 'display_name must be a string']});
 			});
 		});
 
@@ -79,7 +81,7 @@ describe('/users', () => {
 		});
 
 		it('can update the user\'s name', async () => {
-			let new_name = 'woah hey what';
+			let new_name = 'woahheywhat';
 			let resp = await API.post('/users/hey', { user: { name: new_name }}, { 'Authorization': `Bearer ${auth.get('token')}`});
 			
 			expect(resp.statusCode).to.be(200);
