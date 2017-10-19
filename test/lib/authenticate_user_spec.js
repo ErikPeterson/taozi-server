@@ -27,7 +27,7 @@ describe('authenticateUser(ctx, next)', () => {
 			let ctx = {
 				request: {
 					headers: {
-						'Authorization': `Bearer ${auth.get('token')}`
+						authorization: `Bearer ${auth.get('token')}`
 					}
 				}
 			};
@@ -69,7 +69,7 @@ describe('authenticateUser(ctx, next)', () => {
 			let ctx = {
 				request: {
 					headers: {
-						'Authorization': 'Bearer 1234'
+						autorization: 'Bearer 1234'
 					},
 					path: '/activity',
 					method: 'POST'
