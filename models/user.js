@@ -16,7 +16,7 @@ const comparePassword = require('../lib/compare_password');
 
 class User extends BaseModel {
   static get column_name(){ return 'users'; }
-  static get before_validate(){ return ['_validate_email', '_validate_name', '_transform_password', '_validate_password_hash', '_validate_bio']; }
+  static get before_validate(){ return ['_validate_email', '_validate_name', '_transform_password', '_validate_password_hash', '_validate_bio', '_validate_display_name']; }
   static get renderable_attributes(){ return ['email', 'name', '_id', 'avatar_url']};
   
   _validate_email(){
@@ -29,6 +29,12 @@ class User extends BaseModel {
     if(!name) return this.errors.add('name', 'must be present');
     if(name.length >= 23) this.errors.add('name', 'must be 22 characters or fewer');
     if(NAME_REGEX.test(name)) this.errors.add('name', 'may contain only alphanumeric characters and _')
+  }
+
+  _validate_display_name(){
+    if(!this.get('display_name')) this.set('display_name', this.get('name'));
+    if(!this.get('display_name')) return this.errors.add('display_name', 'must be at least 1 character');
+    if(this.get('display_name').length > 200) this.errors.add('display_name', 'must be 200 characters or fewer');
   }
 
   _validate_password_hash(){
@@ -63,7 +69,8 @@ class User extends BaseModel {
       email: '',
       password_hash: '',
       avatar_url: '',
-      bio: ''
+      bio: '',
+      display_name: ''
     };
   }
 }

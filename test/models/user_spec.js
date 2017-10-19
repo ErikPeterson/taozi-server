@@ -150,6 +150,33 @@ describe('User', () => {
 					expect(e.full_messages[0]).to.match(/200 characters or fewer/);
 				}
 			});
+		});
+
+		describe('display_name', () => {
+			it('defaults to name', async () => {
+				let user = await User.create({email:'a@b.com', name: 'a', password: '123456'});
+				expect(user.get('display_name')).to.be('a');
+
+				let user2 = new User({email: 'a@b.com', password: '123456'});
+
+				try{
+					await user2.save();
+					expect().fail();
+				} catch(e) {
+					expect(e.constructor.name).to.be('RecordInvalid');
+					expect(e.message).to.match(/display_name/);
+				}
+			});
+
+			it('must be between fewer than 200 characters', async () => {
+				try{
+					await User.create({email: 'a@b.com', name: 'a', password: '123456', display_name: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'})
+					expect().fail();
+				} catch(e) {
+					expect(e.constructor.name).to.be('RecordInvalid');
+					expect(e.full_messages[0]).to.match(/must be 200 characters or fewer/);
+				}
+			});
 		})
 	});
 
