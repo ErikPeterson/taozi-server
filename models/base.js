@@ -168,10 +168,10 @@ class ModelBase {
     }
 
     async update(attrs){
-        for(let k in attrs){
-            if(attrs.hasOwnProperty(k)){
-                this.set(k, attrs[k]);
-            }
+        let props = Object.getOwnPropertyNames(attrs);
+
+        for(let k of props){
+            this.set(k, attrs[k]);
         }
 
         await this.save();
