@@ -37,6 +37,8 @@ describe('/users', () => {
 				expect(resp.body.user.name).to.be(params.user.name);
 				expect(resp.body.user.password).to.not.be.ok();
 				expect(resp.body.user.password_hash).to.not.be.ok();
+				expect(resp.body.user.display_name).to.be.ok();
+				expect(resp.body.user.bio).to.not.be.ok();
 			});
 		});
 
