@@ -118,6 +118,18 @@ describe('User', () => {
 				}
 			});
 		});
+
+		describe('bio', () => {
+			it('must be 200 characters or fewer', async () => {
+				try{
+					await User.create({email: 'b@a.com', password: '123456', name: 'a', bio: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'});
+					expect().fail();
+				} catch (e) {
+					expect(e.constructor.name).to.be('RecordInvalid');
+					expect(e.full_messages[0]).to.match(/200 characters or fewer/);
+				}
+			});
+		})
 	});
 
 	describe('async #authenticate(password)', () => {
@@ -126,6 +138,14 @@ describe('User', () => {
 				let user = await User.create({email:'a@b.com', name: 'a', password: '123456'});
 				let authentic = await user.authenticate('123456');
 				expect(authentic).to.be.ok();
+			});
+		});
+
+		describe('with no password', () => {
+			it('returns false', async () => {
+				let user = await User.create({email:'a@b.com', name: 'a', password: '123456'});
+				let authentic = await user.authenticate();
+				expect(authentic).to.not.be.ok();
 			});
 		});
 

@@ -15,7 +15,7 @@ const comparePassword = require('../lib/compare_password');
 
 class User extends BaseModel {
   static get column_name(){ return 'users'; }
-  static get before_validate(){ return ['_validate_email', '_validate_name', '_transform_password', '_validate_password_hash']; }
+  static get before_validate(){ return ['_validate_email', '_validate_name', '_transform_password', '_validate_password_hash', '_validate_bio']; }
   static get renderable_attributes(){ return ['email', 'name', '_id', 'avatar_url']};
   
   _validate_email(){
@@ -28,6 +28,10 @@ class User extends BaseModel {
 
   _validate_password_hash(){
     if(!this.get('password_hash')) this.errors.add('password_hash', 'must be present');
+  }
+
+  _validate_bio(){
+    if(this.get('bio') && this.get('bio').length > 200) this.errors.add('bio', 'must be 200 characters or fewer');
   }
 
   async _transform_password(){
@@ -53,7 +57,8 @@ class User extends BaseModel {
       name: '',
       email: '',
       password_hash: '',
-      avatar_url: ''
+      avatar_url: '',
+      bio: ''
     };
   }
 }
