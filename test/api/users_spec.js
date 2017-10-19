@@ -60,49 +60,23 @@ describe('/users', () => {
 		});
 	});
 
-	describe('POST /auth { user: { email, password} }', () => {
+	describe('AUTHENTICATED POST /users/:name { user: {...props}', () => {
+		let user;
+		let auth;
 		let props = {name:'hey', email: 'e@p.com', password: '123456'};
 		
 		beforeEach(async () => {
-			await User.create(props);
+			user = await User.create(props);
+			auth = await Auth.createByCredentials(props);
 		});
 
-		describe('with the correct email and password for a taozi user', () => {
-			it('responds with 201 and an auth token', async () => {
-				let resp = await API.post('/users/auth', {auth: {email: 'e@p.com', password: '123456'}});
-				expect(resp.statusCode).to.be(201);
-				expect(resp.body.auth.token).to.be.ok();
-			});
+		it('can set the user\'s avatar_url', async () => {
+			let avatar_url = 'https://some.aws.url';
+			let resp = await API.post('/users/hey', { user: { avatar_url: avatar_url}}, { 'Authorization': `Bearer ${auth.get('token')}`});
+			
+			expect(resp.statusCode).to.be(200);
+			expect(resp.body.user.avatar_url).to.be(avatar_url);
 		});
-
-		describe('with incorrect or missing credentials', () => {
-			it('responds with 401 and an error', async () => {
-				let password = props.password;
-				let resp = await API.post('/users/auth', {auth: {email: 'a@b.com', password: password}});
-				expect(resp.statusCode).to.be(401);
-				expect(resp.body.errors[0]).to.eql({type: 'Unauthorized', messages: ['no user with those credentials could be found']});
-				let resp2 = await API.post('/users/auth', {auth: {email: 'e@p.com', password: '12345'}});
-				expect(resp2.statusCode).to.be(401);
-				expect(resp2.body.errors[0]).to.eql({type: 'Unauthorized', messages: ['no user with those credentials could be found']});
-			});
-		});
-
-		describe('when a non auth related error occures', () => {
-
-			beforeEach(function(){
-				this.stub = sinon.stub(Auth, 'createByCredentials').callsFake(async () => { throw new Error('butt')});
-			});
-
-			it('reraises', async () => {
-				let resp = await API.post('/users/auth', {auth: {email: 'e@p.com', password: '123456'}});
-				expect(resp.statusCode).to.be(500);
-				expect(resp.body.errors[0]).to.eql({type: 'Error', messages: ['butt']});
-			});
-
-			afterEach(function(){
-				console.log('run');
-				this.stub.restore();
-			});
-		})
 	});
+
 });
