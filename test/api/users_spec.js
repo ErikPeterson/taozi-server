@@ -77,6 +77,48 @@ describe('/users', () => {
 			expect(resp.statusCode).to.be(200);
 			expect(resp.body.user.avatar_url).to.be(avatar_url);
 		});
+
+		it('can update the user\'s name', async () => {
+			let new_name = 'woah hey what';
+			let resp = await API.post('/users/hey', { user: { name: new_name }}, { 'Authorization': `Bearer ${auth.get('token')}`});
+			
+			expect(resp.statusCode).to.be(200);
+			expect(resp.body.user.name).to.be(new_name);
+		});
+
+		it('can update the user\'s email', async () => {
+			let new_email = 'email@email.com';
+			let resp = await API.post('/users/hey', { user: { email: new_email }}, { 'Authorization': `Bearer ${auth.get('token')}`});
+			
+			expect(resp.statusCode).to.be(200);
+			expect(resp.body.user.email).to.be(new_email);
+		});
+
+		it('can update the user\'s password', async () => {
+			let hash = user.get('password_hash');
+			let resp = await API.post('/users/hey', {user: { password: '456789'}}, { 'Authorization': `Bearer ${auth.get('token')}`});
+			expect(resp.statusCode).to.be(200);
+
+			let u2 = await User.find(user.get('_id'));
+			expect(u2.get('password_hash')).not.be(hash);
+		});
+
+		describe('with no auth token', async () => {
+			it('responds with a 401', async () => {
+				let resp = await API.post('/users/hey', {user: {name: 'butt'}});
+				expect(resp.statusCode).to.be(401);
+			});
+		});
+
+		describe('with an auth token for the wrong user', async () => {
+			it('responds with a 403', async () => {
+				let user2 = await User.create({name: 'butt', email: 'butt@butt.com', password: '1234567'});
+				let auth2 = await Auth.createByCredentials({email: 'butt@butt.com', password: '1234567'});
+
+				let resp = await API.post('/users/hey', {user: {name: 'whatever'}}, {'Authorization': `Bearer ${auth2.get('token')}` });
+				expect(resp.statusCode).to.be(403);
+			});
+		});
 	});
 
 });

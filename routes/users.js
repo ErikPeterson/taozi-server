@@ -3,6 +3,7 @@
 const User = require('../models/user');
 const Auth = require('../models/auth');
 const Unauthorized = require('../lib/errors/unauthorized');
+const Forbidden = require('../lib/errors/forbidden');
 const Router = require('koa-router');
 const users = new Router();
 
@@ -32,7 +33,7 @@ module.exports = (router, logger) => {
 		if(user.get('_id').toString() !== ctx.current_user_id) throw new Forbidden('the authenticated user does not have permission to modify this resource');
 
 		let updateParams = ctx.request.params.require('user')
-							.permit('email', 'password', 'avatar_url').value();
+							.permit('email', 'password', 'name', 'avatar_url').value();
 
 		await user.update(updateParams);
 
