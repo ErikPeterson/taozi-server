@@ -9,6 +9,7 @@
 */
 
 const EMAIL_REGEX = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+const NAME_REGEX = /[^aA-zZ_]/
 const BaseModel = require('./base');
 const hashPassword = require('../lib/hash_password');
 const comparePassword = require('../lib/compare_password');
@@ -23,7 +24,11 @@ class User extends BaseModel {
   };
 
   _validate_name(){
-    if( (this.new_record || this._changes.name) && !this.get('name')) this.errors.add('name', 'must be present');
+    let name = this.get('name');
+
+    if(!name) return this.errors.add('name', 'must be present');
+    if(name.length >= 23) this.errors.add('name', 'must be 22 characters or fewer');
+    if(NAME_REGEX.test(name)) this.errors.add('name', 'may contain only alphanumeric characters and _')
   }
 
   _validate_password_hash(){

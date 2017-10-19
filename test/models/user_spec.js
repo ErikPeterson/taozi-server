@@ -16,7 +16,7 @@ describe('User', () => {
 	describe('validations', () => {
 		describe('email', () => {
 			it('must be unique', async () => {
-				let props = {email: 'b@a.com', name: 'a name', password: 'whatever'};
+				let props = {email: 'b@a.com', name: 'aname', password: 'whatever'};
 
 				await User.create(props);
 
@@ -64,7 +64,7 @@ describe('User', () => {
 			});
 
 			it('must be unique', async () => {
-				let props = {email: 'b@a.com', name: 'a name', password: 'whatever'};
+				let props = {email: 'b@a.com', name: 'aname', password: 'whatever'};
 				await User.create(props);
 				try {
 					props.email = 'a@b.com';
@@ -75,12 +75,33 @@ describe('User', () => {
 					expect(e.message).to.match(/name is not valid/);
 				}
 			});
+
+			it('must be fewer than 23 characters', async () => {
+				try{
+					await User.create({email: 'a@b.com', name: 'xxxxxxxxxxxxxxxxxxxxxxx', password: '123456'});
+					expect().fail();
+				} catch(e) {
+					expect(e.constructor.name).to.be('RecordInvalid');
+					expect(e.full_messages[0]).to.match(/22 characters or fewer/)
+				}
+			});
+
+			it('must not contain any characters besides alphanumeric and _', async () => {
+				try{
+					await User.create({email: 'a@b.com', name: 'xxxxxxxxxx xxxxxxxxxxx', password: '123456'});
+					expect().fail();
+				} catch(e) {
+					expect(e.constructor.name).to.be('RecordInvalid');
+					expect(e.full_messages[0]).to.match(/may contain only alphanumeric characters and _/);
+				}
+
+			});
 		});
 
 		describe('password', () => {
 			it('must be present when creating a new record', async () => {
 				try{
-					await User.create({email: 'a@b.com', name: 'a name'});
+					await User.create({email: 'a@b.com', name: 'aname'});
 					expect().fail();
 				} catch (e) {
 					expect(e.constructor.name).to.be('RecordInvalid');
@@ -90,7 +111,7 @@ describe('User', () => {
 
 			it('must be at least 6 characters', async () => {
 				try{
-					await User.create({email: 'a@b.com', name: 'a name', password: '1234'});
+					await User.create({email: 'a@b.com', name: 'aname', password: '1234'});
 					expect().fail();
 				} catch (e) {
 					expect(e.constructor.name).to.be('RecordInvalid');
@@ -99,7 +120,7 @@ describe('User', () => {
 			});
 
 			it('is transformed into password_hash, and unset after save', async () => {
-				let user = await User.create({email: 'a@b.com', name: 'a name', password: '123456'});
+				let user = await User.create({email: 'a@b.com', name: 'aname', password: '123456'});
 				expect(user.get('password')).to.be(undefined);
 				expect(user.get('password_hash')).to.be.ok();
 			});

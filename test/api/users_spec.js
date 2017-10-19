@@ -24,7 +24,7 @@ describe('/users', () => {
 				let params = { 
 					user: {
 						email: 'e@p.com',
-						name: 'some name',
+						name: 'somename',
 						password: '123456'
 					}
 				};
@@ -79,7 +79,7 @@ describe('/users', () => {
 		});
 
 		it('can update the user\'s name', async () => {
-			let new_name = 'woah hey what';
+			let new_name = 'woahheywhat';
 			let resp = await API.post('/users/hey', { user: { name: new_name }}, { 'Authorization': `Bearer ${auth.get('token')}`});
 			
 			expect(resp.statusCode).to.be(200);
