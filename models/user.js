@@ -8,10 +8,10 @@
 }
 */
 
-const bcrypt = require('bcrypt');
 const EMAIL_REGEX = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 const BaseModel = require('./base');
 const hashPassword = require('../lib/hash_password');
+const comparePassword = require('../lib/compare_password');
 
 class User extends BaseModel {
   static get column_name(){ return 'users'; }
@@ -37,11 +37,15 @@ class User extends BaseModel {
     if(this.new_record && !password) return this.errors.add('password', 'must be present for new users');
     if(password){
         if(password.length < 6) return this.errors.add('password', 'must be at least 6 characters');
-        return hashPassword(password).then((hash) => {
-          this.set('password_hash', hash);
-        });
+        let hash = await hashPassword(password);
+        this.set('password_hash', hash);
     }
 
+  }
+
+  async authenticate(password=''){
+    if(!this.persisted) return false;
+    return comparePassword(password, this.get('password_hash'));
   }
 
   static get schema(){

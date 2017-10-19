@@ -20,9 +20,9 @@ describe('async getToken()', () => {
 			await getToken();
 			expect().fail();
 		} catch(e){
-			console.error(e);
 			expect(e.message).to.be('err');
 		}
+		
 		stub.restore();
 		
 	});

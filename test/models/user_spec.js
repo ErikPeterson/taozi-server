@@ -117,6 +117,32 @@ describe('User', () => {
 					expect(e.message).to.match(/password_hash/);
 				}
 			});
+		});
+	});
+
+	describe('async #authenticate(password)', () => {
+		describe('with the correct password', () => {
+			it('returns true', async () => {
+				let user = await User.create({email:'a@b.com', name: 'a', password: '123456'});
+				let authentic = await user.authenticate('123456');
+				expect(authentic).to.be.ok();
+			});
+		});
+
+		describe('with an incorrect password', () => {
+			it('returns false', async () => {
+				let user = await User.create({email:'a@b.com', name: 'a', password: '123456'});
+				let authentic = await user.authenticate('12456');
+				expect(authentic).to.not.be.ok();
+			});
+		});
+
+		describe('with an unpersisted record', () => {
+			it('returns false', async () => {
+				let user = new User();
+				let authentic = await user.authenticate('12345');
+				expect(authentic).to.not.be.ok();
+			});
 		})
 	});
 });
