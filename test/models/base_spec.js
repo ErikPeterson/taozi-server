@@ -428,6 +428,18 @@ describe('ModelBase', () => {
 			})
 		});
 
+		describe('#update(attrs={})', () => {
+			describe('on a persisted record', () => {
+				it('updates the provided attributes, then saves', async () => {
+					let inst = await FakeModel.create({name: 'butt'});
+					await inst.update({name: 'hello', ids: [1,2,3,4]});
+					expect(inst.changed).to.not.be.ok();
+					expect(inst.get('name')).to.be('hello');
+					expect(inst.get('ids')).to.eql([1,2,3,4]);
+				});
+			});
+		});
+
 		describe('#delete()', () => {
 			describe('on a persisted record', () => {
 				it('deletes the record from the db and removes the _id of the instance', async () => {
