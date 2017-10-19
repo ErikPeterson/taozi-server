@@ -167,6 +167,17 @@ class ModelBase {
         });
     }
 
+    async update(attrs){
+        for(let k in attrs){
+            if(attrs.hasOwnProperty(k)){
+                this.set(k, attrs[k]);
+            }
+        }
+
+        await this.save();
+        return true;
+    }
+
     delete(){
         return DB.delete(this.constructor.column_name, this._id).then((result) => {
             if(result.deletedCount === 0) throw new RecordNotFound(this.constructor.name, {_id: this._id});

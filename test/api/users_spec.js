@@ -60,49 +60,72 @@ describe('/users', () => {
 		});
 	});
 
-	describe('POST /auth { user: { email, password} }', () => {
+	describe('AUTHENTICATED POST /users/:name { user: {...props}', () => {
+		let user;
+		let auth;
 		let props = {name:'hey', email: 'e@p.com', password: '123456'};
 		
 		beforeEach(async () => {
-			await User.create(props);
+			user = await User.create(props);
+			auth = await Auth.createByCredentials(props);
 		});
 
-		describe('with the correct email and password for a taozi user', () => {
-			it('responds with 201 and an auth token', async () => {
-				let resp = await API.post('/users/auth', {auth: {email: 'e@p.com', password: '123456'}});
-				expect(resp.statusCode).to.be(201);
-				expect(resp.body.auth.token).to.be.ok();
+		it('can set the user\'s avatar_url', async () => {
+			let avatar_url = 'https://some.aws.url';
+			let resp = await API.post('/users/hey', { user: { avatar_url: avatar_url}}, { 'Authorization': `Bearer ${auth.get('token')}`});
+			
+			expect(resp.statusCode).to.be(200);
+			expect(resp.body.user.avatar_url).to.be(avatar_url);
+		});
+
+		it('can update the user\'s name', async () => {
+			let new_name = 'woah hey what';
+			let resp = await API.post('/users/hey', { user: { name: new_name }}, { 'Authorization': `Bearer ${auth.get('token')}`});
+			
+			expect(resp.statusCode).to.be(200);
+			expect(resp.body.user.name).to.be(new_name);
+		});
+
+		it('can update the user\'s email', async () => {
+			let new_email = 'email@email.com';
+			let resp = await API.post('/users/hey', { user: { email: new_email }}, { 'Authorization': `Bearer ${auth.get('token')}`});
+			
+			expect(resp.statusCode).to.be(200);
+			expect(resp.body.user.email).to.be(new_email);
+		});
+
+		it('can update the user\'s password', async () => {
+			let hash = user.get('password_hash');
+			let resp = await API.post('/users/hey', {user: { password: '456789'}}, { 'Authorization': `Bearer ${auth.get('token')}`});
+			expect(resp.statusCode).to.be(200);
+
+			let u2 = await User.find(user.get('_id'));
+			expect(u2.get('password_hash')).not.be(hash);
+		});
+
+		describe('when no user with the specified name exists', async () => {
+			it('responds with a 403', async () => {
+				let resp = await API.post('/users/what', {user: {name: 'huh'}},  {'Authorization': `Bearer ${auth.get('token')}`});
+				expect(resp.statusCode).to.be(403);
 			});
 		});
 
-		describe('with incorrect or missing credentials', () => {
-			it('responds with 401 and an error', async () => {
-				let password = props.password;
-				let resp = await API.post('/users/auth', {auth: {email: 'a@b.com', password: password}});
+		describe('with no auth token', async () => {
+			it('responds with a 401', async () => {
+				let resp = await API.post('/users/hey', {user: {name: 'butt'}});
 				expect(resp.statusCode).to.be(401);
-				expect(resp.body.errors[0]).to.eql({type: 'Unauthorized', messages: ['no user with those credentials could be found']});
-				let resp2 = await API.post('/users/auth', {auth: {email: 'e@p.com', password: '12345'}});
-				expect(resp2.statusCode).to.be(401);
-				expect(resp2.body.errors[0]).to.eql({type: 'Unauthorized', messages: ['no user with those credentials could be found']});
 			});
 		});
 
-		describe('when a non auth related error occures', () => {
+		describe('with an auth token for the wrong user', async () => {
+			it('responds with a 403', async () => {
+				let user2 = await User.create({name: 'butt', email: 'butt@butt.com', password: '1234567'});
+				let auth2 = await Auth.createByCredentials({email: 'butt@butt.com', password: '1234567'});
 
-			beforeEach(function(){
-				this.stub = sinon.stub(Auth, 'createByCredentials').callsFake(async () => { throw new Error('butt')});
+				let resp = await API.post('/users/hey', {user: {name: 'whatever'}}, {'Authorization': `Bearer ${auth2.get('token')}` });
+				expect(resp.statusCode).to.be(403);
 			});
-
-			it('reraises', async () => {
-				let resp = await API.post('/users/auth', {auth: {email: 'e@p.com', password: '123456'}});
-				expect(resp.statusCode).to.be(500);
-				expect(resp.body.errors[0]).to.eql({type: 'Error', messages: ['butt']});
-			});
-
-			afterEach(function(){
-				console.log('run');
-				this.stub.restore();
-			});
-		})
+		});
 	});
+
 });

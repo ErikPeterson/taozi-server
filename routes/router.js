@@ -3,7 +3,7 @@
 const Router = require('koa-router');
 const router = new Router();
 
-const apps = ['users.js'];
+const apps = ['users.js', 'auth.js'];
 
 module.exports = (logger) => {
 
