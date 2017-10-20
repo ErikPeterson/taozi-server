@@ -50,28 +50,5 @@ module.exports = (router, logger) => {
 		}
 	);
 
-	users.get('user_friend_requests', '/:user_name/friend_requests')
-
-	users.post('user_friend_requests', '/:user_name/friend_requests',
-		authenticateUser, 
-		authorizeUserByUserName, 
-		bodyParser, 
-		permittedParams, 
-		async (ctx, next) => {
-			let createParams = ctx.request.params.require('friend_request')
-								.permit('requested_name').value();
-
-			let requested_users = await User.where({name: createParams.requested_name }, 1);
-			let requested_user = requested_users[0];
-
-			if(!requested_user) throw new BadRequest('the requested user does not exist');
-
-			let friend_request = await FriendRequest.create({requested_user_id: requested_user.get('_id').toString(), requesting_user_id: ctx.current_user_id});
-			ctx.response.status = 201;
-			ctx.response.body = JSON.stringify({friend_request: friend_request.render()});
-			await next();
-		}
-	);
-
     router.use('/users', users.routes(), users.allowedMethods());
 };
