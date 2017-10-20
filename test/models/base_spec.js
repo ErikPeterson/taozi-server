@@ -359,17 +359,6 @@ describe('ModelBase', () => {
 					expect(inst.get('name')).to.be('shoot');
 				});
 
-				it('throws a RecordNotFound error if _id does not exist', async () => {
-					let inst = await FakeModel.create({name: 'wow'});
-					inst.set('name', 'butt');
-					await DB.delete('fake_models', inst._id);
-					try{
-						await inst.save();
-						expect.fail();
-					} catch(e) {
-						expect(e.constructor.name).to.be('RecordNotFound');
-					}
-				});
 			});
 
 			describe('with an invalid record', () => {

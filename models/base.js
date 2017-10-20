@@ -136,35 +136,45 @@ class ModelBase {
         }
         await this.runHook('before_save');
         
-        if(was_new) {
-            return DB.save(this.constructor.column_name, _.merge({}, this._attributes, this._changes))
-                .then((result)=>{
-                    this._attributes = _.merge(this._attributes, result.ops[0]);
-                    this._changes = {};
-                    return this.runHook('after_save');
-                }).then(()=>{
-                    return this.runHook('after_create');
-                }).then(()=>true).catch((e) => {
-                    if(e.constructor.name === 'DuplicatePropertyError'){
-                        let prop = e.property.replace(/^[^.]+/,'');
-                        this.errors.add(prop, 'must be unique');
-                        throw new RecordInvalid(this, this.errors);
-                    }
+        if(was_new){
+            try{
+                let result = await DB.save(this.constructor.column_name, _.merge({}, this._attributes, this._changes));
+                this._attributes = _.merge(this._attributes, result.ops[0]);
+                this._changes = {};
+                await this.runHook('after_save');
+                await this.runHook('after_create');
+                return true;
+            } catch(e) {
+                if(e.constructor.name === 'DuplicatePropertyError'){
+                    let prop = e.property.replace(/^[^.]+/,'');
+                    this.errors.add(prop, 'must be unique');
+                    await this.runHook('after_validate');
+                    throw new RecordInvalid(this, this.errors);
+                }
 
-                    throw e;
-                });
+                throw e;
+            }
         }
+
         await this.runHook('before_update');
-        return DB.update(this.constructor.column_name, this._id, this._changes).then((result) => {
-            if(result.modifiedCount === 0) throw new RecordNotFound({_id: this._id});
+
+        try{
+            let result = await DB.update(this.constructor.column_name, this._id, this._changes);
             this._attributes = _.merge(this._attributes, this._changes);
             this._changes = {};
-            return this.runHook('after_save');
-        }).then(()=>{
-           return this.runHook('after_update');
-        }).then(()=>{
+            await this.runHook('after_save');
+            await this.runHook('after_update');
             return true;
-        });
+        } catch(e){
+            if(e.constructor.name === 'DuplicatePropertyError'){
+                let prop = e.property.replace(/^[^.]+/,'');
+                this.errors.add(prop, 'must be unique');
+                await this.runHook('after_validate');
+                throw new RecordInvalid(this, this.errors);
+            }
+
+            throw e;
+        }
     }
 
     async update(attrs){
