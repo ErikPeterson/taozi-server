@@ -24,7 +24,7 @@ const processRenderableAttributes = (ras, attrs={}) => {
         let key = Object.getOwnPropertyNames(ra)[0];
         obj[key] = processRenderableAttributes(ra[key], attrs[key]);
         return obj;
-    }, {})
+    }, {});
 };
 
 const compare = (schema, attrs, parent_key, errors) => {

@@ -13,14 +13,7 @@ const bodyParser = require('koa-body')({form: false, text: false, url_encoded: f
 const permittedParams = require('../lib/permitted_params');
 const authenticateUser = require('../lib/authenticate_user');
 
-const authorizeUserByName = async (ctx, next) => {
-		let name = decodeURIComponent(ctx.params.name);
-		let users = await User.where({name: name}, 1);
-		let user = users[0];
-		if(!user || user.get('_id').toString() !== ctx.current_user_id) throw new Forbidden('the authenticated user does not have permission to perform this action');
-		ctx.current_user = user;
-		await next();
-};
+const authorizeUserByUserName = require('../lib/authorize_user_by_user_name');
 
 module.exports = (router, logger) => {
 	users.post('users', '/', 
@@ -39,9 +32,9 @@ module.exports = (router, logger) => {
 	);
 
 
-	users.post('user', '/:name', 
+	users.post('user', '/:user_name', 
 		authenticateUser, 
-		authorizeUserByName, 
+		authorizeUserByUserName, 
 		bodyParser, 
 		permittedParams, 
 		async (ctx, next) => {
@@ -57,9 +50,11 @@ module.exports = (router, logger) => {
 		}
 	);
 
-	users.post('userFriendRequests', '/:name/friend_requests',
+	users.get('user_friend_requests', '/:user_name/friend_requests')
+
+	users.post('user_friend_requests', '/:user_name/friend_requests',
 		authenticateUser, 
-		authorizeUserByName, 
+		authorizeUserByUserName, 
 		bodyParser, 
 		permittedParams, 
 		async (ctx, next) => {
