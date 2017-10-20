@@ -130,4 +130,75 @@ describe('/users', () => {
 		});
 	});
 
+	describe('AUTHENTICATED POST /users/:name/friend_requests', () => {
+		let requested_user;
+		let requesting_user;
+		let params;
+		let path;
+
+		beforeEach(async () => {
+			requested_user = await User.create({email: 'a@b.com', name: 'followed', password: '123456'});
+			requesting_user = await User.create({email: 'b@a.com', name: 'follower', password: '12345600'});
+			params = {friend_request: { 
+				requested_name: requested_user.get('name')
+				}};
+			path = `/users/${requesting_user.get('name')}/friend_requests`; 
+		});
+
+		describe('with the requesting user logged in', () => {
+			let auth;
+
+			beforeEach(async () =>{
+				auth = await Auth.createByCredentials({email: 'b@a.com', password: '12345600'});
+			});
+
+			it('creates a new friend request', async () => {
+
+				let headers = {
+					'Authorization': `Bearer ${auth.get('token')}`
+				};
+
+				let resp = await API.post(path, params, headers);
+				expect(resp.statusCode).to.be(201);
+				expect(resp.body.friend_request.requesting_user_id).to.eql(requesting_user.get('_id').toString());
+				expect(resp.body.friend_request.requested_user_id).to.eql(requested_user.get('_id').toString());
+				expect(resp.body.friend_request.accepted_at).to.not.be.ok();
+			});
+
+			describe('when the requested user does not exist', () => {
+				it('responds with a 400', async () => {
+
+					let headers = {
+						'Authorization': `Bearer ${auth.get('token')}`
+					};
+
+					let resp = await API.post(path, { friend_request: { requested_name: 'what' } }, headers);
+					expect(resp.statusCode).to.be(400);
+					expect(resp.body.errors[0].messages[0]).to.be('the requested user does not exist');
+				});
+			});
+		});
+
+		describe('with no user logged in', () => {
+			it('responds with a 401', async () => {
+				let resp = await API.post(path, params);
+
+				expect(resp.statusCode).to.be(401);
+			});
+		});
+
+		describe('with another user logged in', () => {
+			it('responds with 403', async () => {
+				let thirdParty = await User.create({email: 'c@d.com', name: 'third_party', password: '123456'});
+				let auth = await Auth.createByCredentials({email: 'c@d.com', password: '123456'});
+				let bad_params = { friend_request: { requested_name: requested_user.get('name') }};
+				let bad_headers = { 'Authorization': `Bearer ${auth.get('token')}` };
+				let resp = await API.post(path, bad_params, bad_headers);
+
+				expect(resp.statusCode).to.be(403);
+				expect(resp.body.errors[0].type).to.be('Forbidden');
+			});
+		});
+	});
+
 });
