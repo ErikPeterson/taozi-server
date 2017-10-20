@@ -20,7 +20,7 @@ class FriendRequest extends BaseModel{
 		this.errors.add('requested_user_id', 'must be unique within the scope of `requesting_user_id\'');
 	}
 
-	static get renderable_attributes(){ return ['_id', 'requesting_user_id', 'requesting_user_id', 'accepted_at'];}
+	static get renderable_attributes(){ return ['_id', 'requesting_user_id', 'requested_user_id', 'accepted_at'];}
 	static get schema(){
 		return {
 			requesting_user_id: '',
