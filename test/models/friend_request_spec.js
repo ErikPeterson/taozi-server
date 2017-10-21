@@ -45,6 +45,18 @@ describe('FriendRequest', () => {
 				}
 			});
 		});
+
+		describe('accepted_at', () => {
+			it('must be a number that can be converted into a Date', async () => {
+				try{
+					await FriendRequest.create({requesting_user_id: '1234', requested_user_id: '12345', accepted_at: 11111111111111111111111111})
+					expect().fail();
+				} catch(e) {
+					expect(e.constructor.name).to.be('RecordInvalid');
+					expect(e.full_messages[0]).to.match(/accepted_at/);
+				}
+			});
+		})
 	});
 
 });

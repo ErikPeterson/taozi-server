@@ -5,8 +5,15 @@ const ERR_REG = /must be unique$/
 
 class FriendRequest extends BaseModel{
 	static get column_name(){ return 'friend_requests'; }
-	static get before_validate(){ return ['_validate_user_ids']; }
+	static get before_validate(){ return ['_validate_user_ids', '_validate_accepted_at']; }
 	static get after_validate(){ return ['_munge_scope_error']; }
+
+	_validate_accepted_at(){
+		let at = this.get('accepted_at');
+		if(!at || (!this.new_record && !Object.keys(this.changes).includes('accepted_at'))) return;
+		let date = new Date(at);
+		if(date.toString() === 'Invalid Date') this.errors.add('accepted_at', 'must be a valid date');
+	}
 
 	_validate_user_ids(){
 		if(!this.get('requesting_user_id')) this.errors.add('requesting_user_id', 'must be present');
@@ -25,7 +32,7 @@ class FriendRequest extends BaseModel{
 		return {
 			requesting_user_id: '',
 			requested_user_id: '',
-			accepted_at: ''
+			accepted_at: 0
 		}
 	}
 }
