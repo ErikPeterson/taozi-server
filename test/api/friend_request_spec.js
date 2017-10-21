@@ -4,9 +4,9 @@ const expect = require('expect.js');
 const API = require('../support/api');
 const DB = require('../support/db_cleaner');
 const User = require('../../models/user');
-const sinon = require('sinon');
-
+const FriendRequest = require('../../models/friend_request')
 const Auth = require('../../models/auth');
+const faker = require('faker');
 
 describe('/friend_requests', () => {
 	before(async () => {
@@ -19,11 +19,42 @@ describe('/friend_requests', () => {
 
 	describe('AUTHENTICATED GET /', () => {
 		let user;
-		let requesters;
-		let params;
-		let path;
+		let requests;
+		let auth;
+		let headers = {};
 
-		beforeEach()
+		describe('when the user has friend requests', () => {
+			beforeEach(async () => {
+				try{
+				user = await User.create({email: 'a@b.com', name: 'a', password: '123456'});
+			} catch(e){ console.log(e.full_messages)}
+				auth = await Auth.createByCredentials({email: 'a@b.com', password: '123456'});
+				headers.Authorization = `Bearer ${auth.get('token')}`;
+				requests = [];
+				for(let i = 0; i < 5; i++){
+					let requester = await User.create({email: faker.internet.email(), name: faker.internet.userName().replace(/[^0-9aA-zZ_]/, ''), password: '123456'});
+					let request = await FriendRequest.create({requesting_user_id: requester.get('_id').toString(), requested_user_id: user.get('_id').toString()})
+					requests.push(request);
+				}
+			});
+
+			it('responds with all of the friend requests that have not yet been accepted', async () => {
+				let resp = await API.get('/friend_requests', null, headers);
+				expect(resp.statusCode).to.be(200);
+				expect(resp.body.friend_requests.length).to.be(5);
+			});
+		});
+
+		describe('when the user has no friend requests', () => {
+			it('returns an empty array', async () => {
+				let user = await User.create({email: 'a@b.com', name: 'a', password: '123456'});
+				let auth = await Auth.createByCredentials({email: 'a@b.com', password: '123456'});
+
+				let resp = await API.get('/friend_requests', null, {'Authorization' : `Bearer ${auth.get('token')}`});
+
+				expect(resp.body.friend_requests).to.be.empty();
+			});
+		});
 	});
 
 	describe('AUTHENTICATED POST /', () => {
