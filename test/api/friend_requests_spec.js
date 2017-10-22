@@ -57,7 +57,7 @@ describe('/friend_requests', () => {
 		});
 	});
 
-	describe('AUTHENTICATED POST /', () => {
+	describe('AUTHENTICATED POST / {friend_request: {requested_name}}', () => {
 		let requested_user;
 		let requesting_user;
 		let params;
@@ -113,6 +113,57 @@ describe('/friend_requests', () => {
 				expect(resp.statusCode).to.be(401);
 			});
 		});
+	});
+
+	describe('AUTHENTICATED POST /friend_requests/:id {friend_request: {accepted_at}}', () => {
+			
+		let user;
+		let auth;
+		let friend_request;
+		let headers;
+		let path;
+		let body;
+
+		beforeEach(async () => {
+			user = await User.create({name: 'a', email: 'a@b.com', password: '123456'});
+			friend_request = await FriendRequest.create({requested_user_id: user.get('_id').toString(), requesting_user_id: '123'});
+			auth = await Auth.createByCredentials({email: 'a@b.com', password: '123456'});
+			headers = { Authorization: `Bearer ${auth.get('token')}` };
+			path = `/friend_requests/${friend_request.get('_id')}`;
+			body = { friend_request: { accepted: true }}
+		});
+
+		describe('with a friend request owned by the logged in user', () => {
+
+			it('can set the friend_request\'s accepted attribute', async () => {
+				let resp = await API.post(path, body, headers);
+				expect(resp.statusCode).to.be(200);
+				expect(resp.body.friend_request).to.eql({
+					_id: friend_request.get('_id').toString(),
+					requested_user_id: user.get('_id').toString(),
+					requesting_user_id: '123',
+					accepted: true
+				});
+			});
+
+			describe('with a friend request that has already been accepted', () => {
+				it('responds with a 400 error', async () => {
+					await friend_request.update({accepted: true});
+					let resp = await API.post(path, body, headers);
+					expect(resp.statusCode).to.be(400);
+					expect(resp.body.errors[0].messages[0]).to.match(/cannot be changed once set/);
+				});
+			})
+		});
+
+		describe('with a friend request that exists, but is not owned by the logged in user', () => {
+			it('responds with  403 error', async () => {
+				let friend_request_2 = await FriendRequest.create({requesting_user_id: '1234',requested_user_id: '12345'});
+				path = `/friend_requests/${friend_request_2.get('_id')}`;
+				let resp = await API.post(path, body, headers);
+				expect(resp.statusCode).to.be(403);
+			});
+		})
 	});
 
 });

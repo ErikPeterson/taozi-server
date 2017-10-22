@@ -18,7 +18,7 @@ module.exports = (router, logger) => {
 	friend_requests.get('friend_requests', '/',
 		authenticateUser,
 		async (ctx, next) => {
-			let requests = await FriendRequest.where({requested_user_id: ctx.current_user_id, accepted_at: null});
+			let requests = await FriendRequest.where({requested_user_id: ctx.current_user_id, accepted: null});
 			ctx.response.status = 200;
 			ctx.response.body = JSON.stringify({friend_requests: requests.map((r) => r.render())});
 		}
@@ -43,6 +43,22 @@ module.exports = (router, logger) => {
 			await next();
 		}
 	);
+
+	friend_requests.post('friend_request', '/:id',
+		authenticateUser,
+		bodyParser,
+		permittedParams,
+		async (ctx, next) => {
+			let friend_request = await FriendRequest.find(ctx.params.id);
+			if(ctx.current_user_id !== friend_request.get('requested_user_id')) throw new Forbidden('you do not have permission to alter this resource');
+			let updateParams = ctx.request.params.require('friend_request')
+								.permit('accepted').value();
+			await friend_request.update({accepted: updateParams.accepted});
+			ctx.response.status = 200;
+			ctx.response.body = JSON.stringify({friend_request: friend_request.render()});
+			await next()
+		}
+	)
 
     router.use('/friend_requests', friend_requests.routes(), friend_requests.allowedMethods());
 };
