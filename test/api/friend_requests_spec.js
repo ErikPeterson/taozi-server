@@ -25,9 +25,7 @@ describe('/friend_requests', () => {
 
 		describe('when the user has friend requests', () => {
 			beforeEach(async () => {
-				try{
 				user = await User.create({email: 'a@b.com', name: 'a', password: '123456'});
-			} catch(e){ console.log(e.full_messages)}
 				auth = await Auth.createByCredentials({email: 'a@b.com', password: '123456'});
 				headers.Authorization = `Bearer ${auth.get('token')}`;
 				requests = [];
