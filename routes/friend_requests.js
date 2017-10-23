@@ -11,7 +11,6 @@ const bodyParser = require('koa-body')({form: false, text: false, url_encoded: f
 const permittedParams = require('../lib/permitted_params');
 const authenticateUser = require('../lib/authenticate_user');
 
-const authorizeUserByUserName = require('../lib/authorize_user_by_user_name');
 
 module.exports = (router, logger) => {
 

@@ -15,7 +15,7 @@ class Auth extends BaseModel {
 	}
 
 	_set_created_at(){
-		this.set('created_at', new Date().getTime());
+		this.set('created_at', new Date());
 	}
 
 	async _set_token(){
@@ -48,7 +48,7 @@ class Auth extends BaseModel {
 		return {
 			token: '',
 			user_id: '',
-			created_at: ''
+			created_at: new Date()
 		}
 	}
 }
