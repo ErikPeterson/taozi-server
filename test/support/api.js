@@ -68,6 +68,10 @@ class API {
 		return await API.request('POST', path, params, headers);
 	}
 
+	static async delete(path, headers){
+		return await API.request('DELETE', path, undefined, headers)
+	}
+
 };
 
 module.exports = API;
