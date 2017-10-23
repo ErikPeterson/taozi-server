@@ -23,7 +23,7 @@ describe('Post', () => {
 
 		describe('user_id', () => {
 			it('must be present', async () => {
-				post.set('user_id', null);
+				post._unset('user_id');
 				try{
 					await post.save();
 					expect().fail();
