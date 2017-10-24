@@ -14,12 +14,13 @@ describe('Post', () => {
 		await DB.clean();
 	});
 
-	describe('validations', () => {
-		let post;
+	let post;
 
-		beforeEach(()=>{
-			post = new Post({user_id: '1234', body: [{type: 'text', content: ''}]})
-		});
+	beforeEach(()=>{
+		post = new Post({user_id: '1234', body: [{type: 'text', content: ''}]})
+	});
+
+	describe('validations', () => {
 
 		describe('user_id', () => {
 			it('must be present', async () => {
@@ -65,6 +66,21 @@ describe('Post', () => {
 					}
 				});
 			});
+		});
+	});
+
+	describe('async #incrementCommentCount', () => {
+		it('increments the comment_count property of the post and saves', async () => {
+			await post.save();
+			await post.incrementCommentCount();
+
+			expect(post.get('comment_count')).to.be(1);
+			expect(post.changed).to.not.be.ok();
+		});
+
+		it('does not save if the post is not yet persisted', async () => {
+			await post.incrementCommentCount();
+			expect(post.new_record).to.be.ok();
 		});
 	});
 });

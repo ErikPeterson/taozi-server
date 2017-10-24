@@ -25,11 +25,20 @@ class Post extends BaseModel {
 		this.set('created_at', new Date());
 	}
 
+	async incrementCommentCount(){
+		let count = this.get('comment_count') || 0;
+		count++;
+		this.set('comment_count', count);
+		if(!this.new_record) await this.save(true);
+		return count;
+	}
+
 	static get schema(){
 		return {
 			user_id: '',
 			body: [],
-			created_at: new Date()
+			created_at: new Date(),
+			comment_count: 1
 		}
 	}
 }
