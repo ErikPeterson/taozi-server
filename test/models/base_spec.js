@@ -317,7 +317,7 @@ describe('ModelBase', () => {
 
 		});
 
-		describe('#save()', () => {
+		describe('#save(override_read_only=false)', () => {
 			describe('with a new record', () => {
 				it('saves the record to the database', async () => {
 					let inst = new FakeModel({name: 'butthead'});
@@ -341,6 +341,14 @@ describe('ModelBase', () => {
 						} catch(e) {
 							expect(e.constructor.name).to.be('RecordIsReadOnly');
 						}
+					});
+
+					it('can be bypassed by passing true', async () => {
+						let inst = await FakeModel.create({name: 'wow'});
+						inst.set('name', 'butt');
+						await inst.save(true);
+						expect(inst.changed).to.be(false);
+						expect(inst.get('name')).to.be('butt');
 					});
 
 					afterEach(()=>{

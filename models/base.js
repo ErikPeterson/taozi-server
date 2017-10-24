@@ -132,8 +132,8 @@ class ModelBase {
         }
     }
 
-    async save(){
-        if(this.constructor.read_only && !this.new_record) throw new RecordIsReadOnly(this);
+    async save(override_read_only=false){
+        if(this.constructor.read_only && !this.new_record && !override_read_only) throw new RecordIsReadOnly(this);
         await this.validate()
         if(!this.errors.empty) throw new RecordInvalid(this, this.errors);
 
