@@ -64,5 +64,20 @@ module.exports = (router, logger) => {
 		}
 	);
 
+	posts.post('post_likes', '/:id/likes',
+		authenticateUser,
+		async (ctx, next) => {
+			let post = await Post.find(ctx.params.id);
+			let friends = await FriendRequest.friends(post.get('user_id'), ctx.current_user_id);
+			
+			if(!friends) throw new Forbidden('you do not have permission to create this resource');
+
+			post.incrementLikeCount();
+			ctx.status = 201;
+			ctx.body = "{}";
+
+			await next();
+		});
+
     router.use('/posts', posts.routes(), posts.allowedMethods());
 };

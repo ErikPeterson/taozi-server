@@ -6,6 +6,7 @@ const User = require('../../models/user');
 const Auth = require('../../models/auth');
 const DB = require('../support/db_cleaner');
 const API = require('../support/api');
+const FriendRequest = require('../../models/friend_request');
 
 describe('/posts', () => {
 	before(async () => {
@@ -62,6 +63,38 @@ describe('/posts', () => {
 					let resp = await API.delete(`/posts/${post.get('_id')}`, headers);
 					expect(resp.statusCode).to.be(403);
 				});
+			});
+		});
+	});
+
+	describe('AUTHENTICATED POST /posts/:id/likes', () => {
+		let liker;
+		let post;
+		let path;
+
+		beforeEach(async () => {
+			post = await Post.create({user_id: user.get('_id').toString(), body: [{type: 'text', content: ''}]});
+			liker = await User.create({email: 'b@c.com', name: 'b', password: '123456'});
+			auth = await Auth.createByCredentials({email: 'b@c.com', password: '123456'});
+			params = {}
+			headers.Authorization = `Bearer ${auth.get('token')}`;
+			path = `/posts/${post.get('_id')}/likes`;
+		});
+
+		describe('with a logged in user that is friends with the post owner', () => {
+			it('adds a like to the post', async () => {
+				await FriendRequest.create({requesting_user_id: liker.get('_id').toString(), requested_user_id: user.get('_id').toString(), accepted: true});
+				let resp = await API.post(path, params, headers);
+				expect(resp.statusCode).to.be(201);
+				await post.reload();
+				expect(post.get('like_count')).to.be(1);
+			});
+		});
+
+		describe('with a logged in user that is not friends with the post owner', () => {
+			it('responds with a 403', async () => {
+				let resp = await API.post(path, params, headers);
+				expect(resp.statusCode).to.be(403);
 			});
 		});
 	});
