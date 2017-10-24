@@ -14,6 +14,7 @@ Taozi (套子) is a social network based off of a semi-defunct app named after a
 	- Auth model
 	- FriendRequest model
 	- Post model
+	- Comment model
 
 - API
 	- user create, update
@@ -21,10 +22,10 @@ Taozi (套子) is a social network based off of a semi-defunct app named after a
 	- authentication middleware
 	- sign in
 	- Post create/delete
+	- Comment on posts
 
 ## TODO
 
-- Implement comments
 - Implement feeds
 - Implement 'greetings'
 - Create web interface
