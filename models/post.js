@@ -9,7 +9,7 @@ class Post extends BaseModel {
 	static get after_validate(){ return ['_validate_body'] };
 	static get before_create(){ return ['_set_created_at'] };
 
-	static get renderable_attributes(){ return ['body', 'created_at', 'user_id', '_id']};
+	static get renderable_attributes(){ return ['body', 'created_at', 'user_id', '_id', 'comment_count']};
 
 	_validate_user_id(){
 		if(!this.get('user_id')) this.errors.add('user_id', 'must be present');
