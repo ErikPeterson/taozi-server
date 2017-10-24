@@ -178,6 +178,15 @@ class ModelBase {
         return true;
     }
 
+    async reload(){
+        if(this.new_record) return;
+
+        let props = await DB.find(this.constructor.column_name, this.get('_id'));
+        if(!props) throw new RecordNotFound(this.constructor.name, {_id: this.get('_id')});
+        this._attributes = props;
+        this._changes = {};
+    }
+
     delete(){
         return DB.delete(this.constructor.column_name, this._id).then((result) => {
             if(result.deletedCount === 0) throw new RecordNotFound(this.constructor.name, {_id: this._id});
