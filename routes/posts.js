@@ -2,8 +2,11 @@
 
 const _ = require('lodash');
 const Post = require('../models/post');
+const Comment = require('../models/comment');
 const Forbidden = require('../lib/errors/forbidden');
 const Router = require('koa-router');
+const FriendRequest = require('../models/friend_request');
+
 const posts = new Router();
 
 const bodyParser = require('koa-body')({form: false, text: false, url_encoded: false});
@@ -38,6 +41,26 @@ module.exports = (router, logger) => {
 			if(ctx.current_user_id !== post.get('user_id')) throw new Forbidden('you do not have permission to modify this resource');
 			await post.delete();
 			ctx.response.status = 204;
+		}
+	);
+
+	posts.post('post_comments', '/:id/comments',
+		authenticateUser,
+		bodyParser,
+		permittedParams,
+		async (ctx, next) => {
+			let post = await Post.find(ctx.params.id);
+			let friends = await FriendRequest.friends(post.get('user_id'), ctx.current_user_id);
+			
+			if(!friends) throw new Forbidden('you do not have permission to create this resource');
+			
+			let comment_params = _.merge({user_id: ctx.current_user_id, post_id: post.get('_id').toString()}, ctx.request.params.require('comment').permit('text').value());
+			let comment = await Comment.create(comment_params);
+			post.incrementCommentCount();
+			ctx.status = 201;
+			ctx.body = JSON.stringify({comment: comment.render() });
+
+			await next();
 		}
 	);
 

@@ -29,6 +29,14 @@ class FriendRequest extends BaseModel{
 		this.errors.add('requested_user_id', 'must be unique within the scope of `requesting_user_id\'');
 	}
 
+	static async friends(user_id_1, user_id_2){
+		user_id_1 = user_id_1.toString();
+		user_id_2 = user_id_2.toString();
+		let q = { $in: [user_id_1, user_id_2]};
+		let result = await FriendRequest.exists({ requesting_user_id: q, requested_user_id: q, accepted: true})
+		return result;
+	}
+
 	static get renderable_attributes(){ return ['_id', 'requesting_user_id', 'requested_user_id', 'accepted'];}
 	static get schema(){
 		return {

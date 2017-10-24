@@ -317,7 +317,7 @@ describe('ModelBase', () => {
 
 		});
 
-		describe('#save()', () => {
+		describe('#save(override_read_only=false)', () => {
 			describe('with a new record', () => {
 				it('saves the record to the database', async () => {
 					let inst = new FakeModel({name: 'butthead'});
@@ -341,6 +341,14 @@ describe('ModelBase', () => {
 						} catch(e) {
 							expect(e.constructor.name).to.be('RecordIsReadOnly');
 						}
+					});
+
+					it('can be bypassed by passing true', async () => {
+						let inst = await FakeModel.create({name: 'wow'});
+						inst.set('name', 'butt');
+						await inst.save(true);
+						expect(inst.changed).to.be(false);
+						expect(inst.get('name')).to.be('butt');
 					});
 
 					afterEach(()=>{
@@ -417,6 +425,40 @@ describe('ModelBase', () => {
 			})
 		});
 
+		describe('#reload()', () => {
+			describe('on a persisted record', () => {
+				it('reloads the instance from the database', async () => {
+					let inst = await FakeModel.create({name: 'butt'});
+					let inst2 = await FakeModel.find(inst.get('_id'));
+					await inst2.update({name: 'what'});
+					await inst.reload();
+					expect(inst.get('name')).to.be('what');
+				});
+
+				it('throws an error if the instance was deleted from the db', async () => {
+					let inst = await FakeModel.create({name: 'butt'});
+					let inst2 = await FakeModel.find(inst.get('_id'));
+					await inst2.delete();
+					
+					try{
+						await inst.reload();
+					} catch(e) {
+						expect(e.constructor.name).to.be('RecordNotFound');
+					}
+
+				});
+
+			});
+
+			describe('on an unpersisted record', () => {
+				it('does nothing', async () => {
+					let inst = new FakeModel({name: 'whatup'});
+					await inst.reload();
+					expect(inst.get('name')).to.be('whatup');
+				});
+			});
+		});
+
 		describe('#update(attrs={})', () => {
 			describe('on a persisted record', () => {
 				it('updates the provided attributes, then saves', async () => {
@@ -426,6 +468,7 @@ describe('ModelBase', () => {
 					expect(inst.get('name')).to.be('hello');
 					expect(inst.get('ids')).to.eql([1,2,3,4]);
 				});
+
 			});
 		});
 

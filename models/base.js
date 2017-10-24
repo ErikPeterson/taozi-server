@@ -132,8 +132,8 @@ class ModelBase {
         }
     }
 
-    async save(){
-        if(this.constructor.read_only && !this.new_record) throw new RecordIsReadOnly(this);
+    async save(override_read_only=false){
+        if(this.constructor.read_only && !this.new_record && !override_read_only) throw new RecordIsReadOnly(this);
         await this.validate()
         if(!this.errors.empty) throw new RecordInvalid(this, this.errors);
 
@@ -176,6 +176,15 @@ class ModelBase {
 
         await this.save();
         return true;
+    }
+
+    async reload(){
+        if(this.new_record) return;
+
+        let props = await DB.find(this.constructor.column_name, this.get('_id'));
+        if(!props) throw new RecordNotFound(this.constructor.name, {_id: this.get('_id')});
+        this._attributes = props;
+        this._changes = {};
     }
 
     delete(){
