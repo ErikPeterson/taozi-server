@@ -9,7 +9,7 @@ class Post extends BaseModel {
 	static get after_validate(){ return ['_validate_body'] };
 	static get before_create(){ return ['_set_created_at'] };
 
-	static get renderable_attributes(){ return ['body', 'created_at', 'user_id', '_id', 'comment_count']};
+	static get renderable_attributes(){ return ['body', 'created_at', 'user_id', '_id', 'comment_count', 'like_count']};
 
 	_validate_user_id(){
 		if(!this.get('user_id')) this.errors.add('user_id', 'must be present');
@@ -33,12 +33,21 @@ class Post extends BaseModel {
 		return count;
 	}
 
+	async incrementLikeCount(){
+		let count = this.get('like_count') || 0;
+		count++;
+		this.set('like_count', count);
+		if(!this.new_record) await this.save(true);
+		return count;
+	}
+
 	static get schema(){
 		return {
 			user_id: '',
 			body: [],
 			created_at: new Date(),
-			comment_count: 1
+			comment_count: 1,
+			like_count: 1
 		}
 	}
 }

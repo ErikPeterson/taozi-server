@@ -70,7 +70,7 @@ describe('Post', () => {
 	});
 
 	describe('async #incrementCommentCount', () => {
-		it('increments the comment_count property of the post and saves', async () => {
+		it('increments the like_count property of the post and saves', async () => {
 			await post.save();
 			await post.incrementCommentCount();
 
@@ -82,5 +82,21 @@ describe('Post', () => {
 			await post.incrementCommentCount();
 			expect(post.new_record).to.be.ok();
 		});
+	});
+
+	describe('async #incrementLikeCount', () => {
+		it('increments the like_count property of the post and saves', async () => {
+			await post.save();
+			await post.incrementLikeCount();
+
+			expect(post.get('like_count')).to.be(1);
+			expect(post.changed).to.not.be.ok();
+		});
+
+		it('does not save if the post is not yet persisted', async () => {
+			await post.incrementLikeCount();
+			expect(post.new_record).to.be.ok();
+		});
+
 	});
 });
