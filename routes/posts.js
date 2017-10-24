@@ -56,7 +56,7 @@ module.exports = (router, logger) => {
 			
 			let comment_params = _.merge({user_id: ctx.current_user_id, post_id: post.get('_id').toString()}, ctx.request.params.require('comment').permit('text').value());
 			let comment = await Comment.create(comment_params);
-
+			post.incrementCommentCount();
 			ctx.status = 201;
 			ctx.body = JSON.stringify({comment: comment.render() });
 
