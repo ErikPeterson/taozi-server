@@ -44,6 +44,23 @@ module.exports = (router, logger) => {
 		}
 	);
 
+	posts.get('post_comments', '/:id/comments', 
+		authenticateUser,
+		async (ctx, next) => {
+			let post = await Post.find(ctx.params.id);
+			let friends = await FriendRequest.friends(post.get('user_id'), ctx.current_user_id);
+
+			if(!friends) throw new Forbidden('you do not have permission to create this resource');
+
+			let comments = await Comment.where({post_id: post.get('_id').toString()});
+
+			ctx.status = 200;
+			ctx.body = JSON.stringify({comments: comments.map( c => {return { comment: c.render() }})});
+
+			await next();
+		}
+	);
+
 	posts.post('post_comments', '/:id/comments',
 		authenticateUser,
 		bodyParser,
