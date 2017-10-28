@@ -196,7 +196,7 @@ describe('ModelBase', () => {
 			describe('when the record does not exist', () => {
 				it('throws a RecordNotFound error', async () => {
 					try{
-						await FakeModel.find(1).then(console.log);
+						await FakeModel.find(1);
 					} catch(e) {
 						expect(e.constructor.name).to.be('RecordNotFound');
 					}
