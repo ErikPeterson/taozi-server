@@ -239,7 +239,9 @@ class ModelBase {
     static async where(query, options={}){
         return DB.where(this.column_name, query, options)
                 .then((results) => {
-                    return results.map((res) => new this(res));
+                    let page = results.map((res) => new this(res));
+                    page.next_page = results.next_page;
+                    return page; 
                 })
     }
 

@@ -113,11 +113,7 @@ describe('ModelBase', () => {
 				describe('and the property has been changed since last save', () => {
 					it('returns the new value', async () => {
 						let inst = new FakeModel({name: 'butt'});
-						try{
-							await inst.save();
-						} catch(e) {
-							console.log(e.full_messages);
-						}
+						await inst.save();
 						inst.set('name', 'bum');
 						expect(inst.get('name')).to.be('bum');
 					});
