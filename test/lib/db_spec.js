@@ -157,7 +157,7 @@ describe('DB', () => {
 
                 describe('with a sort', async () => {
                     it('returns the indicated page of results in order', async () => {
-                        let results = await DB.where('test_records', {}, { limit: 5, page: 1, sort: { name: -1}})
+                        let results = await DB.where('test_records', {}, { limit: 5, page: 1, sort: ['name', -1]})
                         expect(results.length).to.be(5);
                         expect(results.map( r => r.name )).to.eql(['f', 'e', 'd', 'c', 'b']);
                         expect(results.next_page).to.be.ok();
