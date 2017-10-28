@@ -6,6 +6,8 @@ class RecordNotFound extends Error {
 		this.class = class_name;
 		this.query = query;
 	}
+
+	get status(){ return 404}
 }
 
 module.exports = RecordNotFound;
