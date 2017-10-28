@@ -208,7 +208,7 @@ describe('ModelBase', () => {
 			});
 		});
 
-		describe('.where(query, limit)', () => {
+		describe('.where(query, options={})', () => {
 			it('returns all matching data', async () => {
 				let inst = await FakeModel.create({name: 'hey'});
 				let inst2 = await FakeModel.create({name: 'hey'});
@@ -223,7 +223,7 @@ describe('ModelBase', () => {
 					let inst = await FakeModel.create({name: 'hey'});
 					let inst2 = await FakeModel.create({name: 'hey'});
 
-					let results = await FakeModel.where({name: 'hey'}, 1);
+					let results = await FakeModel.where({name: 'hey'}, {limit: 1});
 					expect(results.length).to.be(1);
 				});
 			});

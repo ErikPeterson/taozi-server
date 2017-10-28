@@ -113,7 +113,7 @@ describe('DB', () => {
         });
     });
 
-    describe('.where(collection_name, query, limit)', () => {
+    describe('.where(collection_name, query, options={limit, page, sort})', () => {
         it('returns all matching records', async () => {
             await DB.save('test_records', [{name: 'a'}, {name: 'a'}]);
             let res = await DB.where('test_records', {name: 'a'});
@@ -123,10 +123,46 @@ describe('DB', () => {
         describe('with a limit', () => {
             it('returns only a single matching record', async () => {
                 await DB.save('test_records', [{name: 'a'}, {name: 'a'}]);
-                let res = await DB.where('test_records', {name: 'a'}, 1);
+                let res = await DB.where('test_records', {name: 'a'}, {limit: 1});
                 expect(res.length).to.be(1);
             });
         });
+
+        describe('with a page', () => {
+            beforeEach(async () => {
+                await DB.save('test_records', [{name: 'a'}, {name: 'b'}, {name: 'c'}, {name: 'd'}, {name: 'e'}, {name: 'f'}]);    
+            });
+    
+            describe('with a limit', () => {
+                it('returns the indicated page of results', async () => {
+                    let results = await DB.where('test_records', {}, { limit: 5, page: 1});
+                    expect(results.length).to.be(5);
+                    expect(results.map(r => r.name)).to.eql(['a','b','c','d','e']);
+                    expect(results.next_page).to.be.ok();
+                });
+
+                describe('when there isn\'t a next page', async () => {
+                    it('returns the indicated page and sets result.next_page to true', async () => {
+                        let results = await DB.where('test_records', {}, { limit: 5, page: 2});
+                        expect(results.length).to.be(1);
+                        expect(results[0].name).to.be('f');
+                    });        
+                });
+                describe('with then page is out of range', async () => {
+                    it('returns an empty array and sets result.next_page to false', async () => {
+                        let results = await DB.where('test_records', {}, { limit: 5, page: 3});
+                        expect(results).to.be.empty();
+                    });
+                });
+            });
+
+            describe('with no limit', () => {
+                it('returns the full set of results', async () => {
+                    let results = await DB.where('test_records', {}, { page: 1 }); 
+                    expect(results.length).to.be(6);
+                });        
+            });
+        })
     });
 
     describe('.exists(collection_name, query)', () => {
