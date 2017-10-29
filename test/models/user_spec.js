@@ -180,34 +180,34 @@ describe('User', () => {
 			});
 		});
 
-		describe('posts_viewable_by', () => {
+		describe('post_visibility', () => {
 			it('defaults to 1 (friends of friends)', async () => {
 				let user = await User.create({email: 'a@b.com', name: 'a', password: '123456'});
-				expect(user.get('posts_viewable_by')).to.be(1);
+				expect(user.get('post_visibility')).to.be(1);
 			});
 
 			it('can only be 1 or 0', async () => {
-				let user = await User.create({email: 'a@b.com', name: 'a', password: '123456', posts_viewable_by: 0});
-				expect(user.get('posts_viewable_by')).to.be(0);
+				let user = await User.create({email: 'a@b.com', name: 'a', password: '123456', post_visibility: 0});
+				expect(user.get('post_visibility')).to.be(0);
 				try{
-					await user.update({posts_viewable_by: 50});
+					await user.update({post_visibility: 50});
 				} catch (e) {
 					expect(e.constructor.name).to.be('RecordInvalid');
 				}
 			});
 		});
 
-		describe('old_posts_viewable_by', () => {
+		describe('old_post_visibility', () => {
 			it('defaults to 0', async () => {
 				let user = await User.create({email: 'a@b.com', name: 'a', password: '123456'});
-				expect(user.get('old_posts_viewable_by')).to.be(0);
+				expect(user.get('old_post_visibility')).to.be(0);
 			});
 
 			it('can only be 1 or 0', async () => {
-				let user = await User.create({email: 'a@b.com', name: 'a', password: '123456', old_posts_viewable_by: 1});
-				expect(user.get('old_posts_viewable_by')).to.be(1);
+				let user = await User.create({email: 'a@b.com', name: 'a', password: '123456', old_post_visibility: 1});
+				expect(user.get('old_post_visibility')).to.be(1);
 				try{
-					await user.update({old_posts_viewable_by: 50});
+					await user.update({old_post_visibility: 50});
 				} catch (e) {
 					expect(e.constructor.name).to.be('RecordInvalid');
 				}
@@ -251,7 +251,7 @@ describe('User', () => {
 
 	describe('async #visibleTo(user_id)', () => {
 		let createUsers = async (visibility, friends, fof) => {
-			let user = await User.create({name: 'a', email: 'a@b.com', password: '123456', posts_viewable_by: visibility});
+			let user = await User.create({name: 'a', email: 'a@b.com', password: '123456', post_visibility: visibility});
 			let viewer = await User.create({name: 'b', email: 'b@a.com', password: '123456'});
 			if(friends) await FriendRequest.create({requested_user_id: user.get('_id').toString(), requesting_user_id: viewer.get('_id').toString(), accepted: true});
 			if(fof){

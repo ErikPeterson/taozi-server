@@ -39,6 +39,8 @@ describe('/users', () => {
 				expect(resp.body.user.password_hash).to.not.be.ok();
 				expect(resp.body.user.display_name).to.be.ok();
 				expect(resp.body.user.bio).to.not.be.ok();
+				expect(resp.body.user.post_visibility).to.be(1);
+				expect(resp.body.user.old_post_visibility).to.be(0);
 			});
 		});
 
@@ -66,15 +68,16 @@ describe('/users', () => {
 		let user;
 		let auth;
 		let props = {name:'hey', email: 'e@p.com', password: '123456'};
-		
+		let headers = {}
 		beforeEach(async () => {
 			user = await User.create(props);
 			auth = await Auth.createByCredentials(props);
+			headers.Authorization = `Bearer ${auth.get('token')}`;
 		});
 
 		it('can set the user\'s avatar_url', async () => {
 			let avatar_url = 'https://some.aws.url';
-			let resp = await API.post('/users/hey', { user: { avatar_url: avatar_url}}, { 'Authorization': `Bearer ${auth.get('token')}`});
+			let resp = await API.post('/users/hey', { user: { avatar_url: avatar_url}}, headers);
 			
 			expect(resp.statusCode).to.be(200);
 			expect(resp.body.user.avatar_url).to.be(avatar_url);
@@ -82,7 +85,7 @@ describe('/users', () => {
 
 		it('can update the user\'s name', async () => {
 			let new_name = 'woahheywhat';
-			let resp = await API.post('/users/hey', { user: { name: new_name }}, { 'Authorization': `Bearer ${auth.get('token')}`});
+			let resp = await API.post('/users/hey', { user: { name: new_name }}, headers);
 			
 			expect(resp.statusCode).to.be(200);
 			expect(resp.body.user.name).to.be(new_name);
@@ -90,7 +93,7 @@ describe('/users', () => {
 
 		it('can update the user\'s email', async () => {
 			let new_email = 'email@email.com';
-			let resp = await API.post('/users/hey', { user: { email: new_email }}, { 'Authorization': `Bearer ${auth.get('token')}`});
+			let resp = await API.post('/users/hey', { user: { email: new_email }}, headers);
 			
 			expect(resp.statusCode).to.be(200);
 			expect(resp.body.user.email).to.be(new_email);
@@ -98,16 +101,30 @@ describe('/users', () => {
 
 		it('can update the user\'s password', async () => {
 			let hash = user.get('password_hash');
-			let resp = await API.post('/users/hey', {user: { password: '456789'}}, { 'Authorization': `Bearer ${auth.get('token')}`});
+			let resp = await API.post('/users/hey', {user: { password: '456789'}}, headers);
 			expect(resp.statusCode).to.be(200);
 
 			let u2 = await User.find(user.get('_id'));
 			expect(u2.get('password_hash')).not.be(hash);
 		});
 
+		it('can update the user\'s bio', async () => {
+			let new_bio = 'Wow what a wonderful bio. Just so good!';
+			let resp = await API.post('/users/hey', { user: { bio: new_bio }}, headers);
+			expect(resp.statusCode).to.be(200);
+			expect(resp.body.user.bio).to.be(new_bio);
+		});
+
+		it('can update the user\'s privacy settings', async () => {
+			let resp = await API.post('/users/hey', { user: { post_visibility: 0, old_post_visibility: 1}}, headers);
+			expect(resp.statusCode).to.be(200);
+			expect(resp.body.user.post_visibility).to.be(0);
+			expect(resp.body.user.old_post_visibility).to.be(1);
+		});
+
 		describe('when no user with the specified name exists', async () => {
 			it('responds with a 403', async () => {
-				let resp = await API.post('/users/what', {user: {name: 'huh'}},  {'Authorization': `Bearer ${auth.get('token')}`});
+				let resp = await API.post('/users/what', {user: {name: 'huh'}}, headers);
 				expect(resp.statusCode).to.be(403);
 			});
 		});

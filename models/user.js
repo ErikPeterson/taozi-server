@@ -21,8 +21,8 @@ const BEFORE_VALIDATE = [
     '_validate_password_hash', 
     '_validate_bio', 
     '_validate_display_name', 
-    '_validate_posts_viewable_by', 
-    '_validate_old_posts_viewable_by'
+    '_validate_post_visibility', 
+    '_validate_old_post_visibility'
 ];
 
 const RENDERABLE_ATTRIBUTES = [
@@ -31,7 +31,9 @@ const RENDERABLE_ATTRIBUTES = [
     '_id', 
     'avatar_url', 
     'bio', 
-    'display_name'
+    'display_name',
+    'post_visibility',
+    'old_post_visibility'
 ];
 
 const FriendRequest = require('./friend_request');
@@ -67,16 +69,16 @@ class User extends BaseModel {
         if(this.get('bio') && this.get('bio').length > 200) this.errors.add('bio', 'must be 200 characters or fewer');
     }
 
-    _validate_posts_viewable_by(){
-        let n = this.get('posts_viewable_by');
-        if(this.new_record && (n === undefined || n === null)) return this.set('posts_viewable_by', 1);
-        if(n !== 0 && n !== 1) this.errors.add('posts_viewable_by', 'must be 1 or 0');
+    _validate_post_visibility(){
+        let n = this.get('post_visibility');
+        if(this.new_record && (n === undefined || n === null)) return this.set('post_visibility', 1);
+        if(n !== 0 && n !== 1) this.errors.add('post_visibility', 'must be 1 or 0');
     }
 
-    _validate_old_posts_viewable_by(){
-        let n = this.get('old_posts_viewable_by');
-        if(this.new_record && (n === undefined || n === null)) return this.set('old_posts_viewable_by', 0);
-        if(n !== 0 && n !== 1) this.errors.add('old_posts_viewable_by', 'must be 1 or 0');
+    _validate_old_post_visibility(){
+        let n = this.get('old_post_visibility');
+        if(this.new_record && (n === undefined || n === null)) return this.set('old_post_visibility', 0);
+        if(n !== 0 && n !== 1) this.errors.add('old_post_visibility', 'must be 1 or 0');
     }
 
     async _transform_password(){
@@ -98,7 +100,7 @@ class User extends BaseModel {
     }
 
     async visibleTo(user_id){
-        if(this.get('posts_viewable_by') === 0){
+        if(this.get('post_visibility') === 0){
             let friends = await FriendRequest.areFriends(this.get('_id'), user_id);
             return friends;
         } else {
@@ -115,8 +117,8 @@ class User extends BaseModel {
             avatar_url: '',
             bio: '',
             display_name: '',
-            old_posts_viewable_by: 0,
-            posts_viewable_by: 0
+            old_post_visibility: 0,
+            post_visibility: 0
         };
     }
 }

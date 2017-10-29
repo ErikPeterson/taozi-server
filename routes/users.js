@@ -21,7 +21,9 @@ module.exports = (router, logger) => {
 		permittedParams, 
 		async (ctx, next) => {
 		    let userParams = ctx.request.params.require('user')
-		                        .permit('name', 'email', 'password')
+		                        .permit(
+		                        	'name', 'email', 'password', 'post_visibility', 
+		                        	'old_post_visibility', 'bio', 'display_name', 'avatar_url')
 		                        .value();
 
 		    let user = await User.create(userParams);
@@ -40,7 +42,10 @@ module.exports = (router, logger) => {
 		async (ctx, next) => {
 
 			let updateParams = ctx.request.params.require('user')
-								.permit('email', 'password', 'name', 'avatar_url', 'bio', 'display_name').value();
+								.permit(
+									'email', 'password', 'name', 'avatar_url', 'bio', 
+									'display_name', 'post_visibility', 'old_post_visibility')
+								.value();
 
 			await ctx.current_user.update(updateParams);
 
