@@ -62,8 +62,9 @@ class ModelBase {
         this.errors = new Errors();
     }
 
-    render(){
-        return processRenderableAttributes(this.constructor.renderable_attributes, this._attributes)
+    render(role){
+        if(role) return processRenderableAttributes(this.constructor['renderable_attributes_for_' + role], this._attributes);
+        return processRenderableAttributes(this.constructor.renderable_attributes, this._attributes);
     }
 
     get new_record(){

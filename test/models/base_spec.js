@@ -38,7 +38,7 @@ describe('ModelBase', () => {
 		});
 	});
 
-	describe('#render()', () => {
+	describe('#render(for=null)', () => {
 		describe('with no attributes set', () => {
 			it('returns a hash with empty values', () => {
 				let inst = new FakeModel();
@@ -54,24 +54,48 @@ describe('ModelBase', () => {
 					}
 				});
 			});
-		});
+		});;
 
 		describe('with attributes set', () => {
-			it('returns a hash with values from the instance', () => {
-				let attributes = {
-					'_id': '1234', 
-					'name': 'Mickey', 
-					'options': {
-						'hey': 'a', 
-						'now': {
-							'b': 'c'
-						}, 
-						'what': {
-							'yes': 'no', 
-							'no': 'yes'
-						}
+			let attributes = {
+				'_id': '1234', 
+				'name': 'Mickey', 
+				'options': {
+					'hey': 'a', 
+					'now': {
+						'b': 'c'
+					}, 
+					'what': {
+						'yes': 'no', 
+						'no': 'yes'
 					}
 				}
+			};
+
+			describe('with for passed', () => {
+				describe('if there is a `renderable_attributes_for_x` defined', () => {
+					it('returns a hash of the attributes specified', () => {
+						let expected = {
+							name: 'Mickey',
+							options: {
+								hey: 'a'
+							}
+						};
+
+						let inst = new FakeModel(attributes);
+						expect(inst.render('external')).to.eql(expected);
+					});
+				});
+
+				describe('if there is no attribute set defined for x', () => {
+					it('throws an error', () => {
+						let inst = new FakeModel(attributes);
+						expect(() => { inst.render('blah') }).to.throwError();
+					});
+				})
+			});
+
+			it('returns a hash with values from the instance', () => {
 				let expected = {
 					'_id': '1234',
 					'name': 'Mickey',

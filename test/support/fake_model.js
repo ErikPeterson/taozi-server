@@ -75,6 +75,10 @@ class FakeModel extends ModelBase {
 		return ['_id', 'name', {'options': ['hey', 'now', {'what': ['yes']}]}]
 	}
 
+	static get renderable_attributes_for_external(){
+		return ['name', {'options': ['hey']}];
+	}
+
 	static get schema(){
 		return {
 					name: '',
