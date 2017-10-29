@@ -90,4 +90,44 @@ describe('FriendRequest', () => {
 		});
 	});
 
+	describe('async .friendIds(user_id)', () => {
+		it('returns all the user ids that are friends of the user', async () => {
+			await FriendRequest.create({ requesting_user_id: '1', requested_user_id: '2', accepted: true })
+			await FriendRequest.create({ requesting_user_id: '1', requested_user_id: '3', accepted: true })
+			await FriendRequest.create({ requesting_user_id: '4', requested_user_id: '1', accepted: true })
+			await FriendRequest.create({ requesting_user_id: '1', requested_user_id: '5'})
+			let res = await FriendRequest.friendIds('1');
+			expect(res.length).to.be(3);
+			expect(res.includes('5')).to.not.be.ok();
+		});
+
+		it('returns an empty array if the user has no friends', async () => {
+			await FriendRequest.create({ requesting_user_id: '1', requested_user_id: '5'})
+			let res = await FriendRequest.friendIds('1');
+			expect(res.length).to.be(0);
+		});
+	});
+
+	describe('async .friendsOfFriends(user_id_1, user_id_2)', () => {
+		it('returns true if the users are friends', async () => {
+			await FriendRequest.create({ requesting_user_id: '1', requested_user_id: '2', accepted: true});
+			let result = await FriendRequest.friendsOfFriends('1', '2');
+			expect(result).to.be.ok();
+		});
+
+		it('returns true if the users have a friend in common', async () => {
+			await FriendRequest.create({ requesting_user_id: '1', requested_user_id: '3', accepted: true});
+			await FriendRequest.create({ requesting_user_id: '2', requested_user_id: '3', accepted: true});
+			let result = await FriendRequest.friendsOfFriends('1', '2');
+			expect(result).to.be.ok();
+		});
+
+		it('returns false if the users have no friends in common', async () => {
+			await FriendRequest.create({ requesting_user_id: '1', requested_user_id: '3', accepted: true});
+			await FriendRequest.create({ requesting_user_id: '2', requested_user_id: '4', accepted: true});
+			let result = await FriendRequest.friendsOfFriends('1', '2');
+			expect(result).to.not.be.ok();
+		});
+	});
+
 });
