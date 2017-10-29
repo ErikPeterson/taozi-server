@@ -34,10 +34,12 @@ const RENDERABLE_ATTRIBUTES = [
     'display_name'
 ];
 
+const FriendRequest = require('./friend_request');
+
 class User extends BaseModel {
     static get column_name(){ return 'users'; }
     static get before_validate(){ return BEFORE_VALIDATE; }
-    static get renderable_attributes(){ return RENDERABLE_ATTRIBUTESS; }
+    static get renderable_attributes(){ return RENDERABLE_ATTRIBUTES; }
     
     _validate_email(){
         if( (this.new_record || this._changes.email) && !EMAIL_REGEX.test(this.get('email'))) this.errors.add('email', 'must be a valid email address');
@@ -93,6 +95,16 @@ class User extends BaseModel {
     async authenticate(password=''){
         if(!this.persisted) return false;
         return comparePassword(password, this.get('password_hash'));
+    }
+
+    async visibleTo(user_id){
+        if(this.get('posts_viewable_by') === 0){
+            let friends = await FriendRequest.friends(this.get('_id'), user_id);
+            return friends;
+        } else {
+            let fof = await FriendRequest.friendsOfFriends(this.get('_id'), user_id);
+            return fof;
+        }
     }
 
     static get schema(){

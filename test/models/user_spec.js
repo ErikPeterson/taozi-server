@@ -3,6 +3,7 @@
 const expect = require('expect.js');
 const DB = require('../support/db_cleaner');
 const User = require('../../models/user');
+const FriendRequest = require('../../models/friend_request');
 
 describe('User', () => {
 	before(async () => {
@@ -246,5 +247,56 @@ describe('User', () => {
 				expect(authentic).to.not.be.ok();
 			});
 		})
+	});
+
+	describe('async #visibleTo(user_id)', () => {
+		let createUsers = async (visibility, friends, fof) => {
+			let user = await User.create({name: 'a', email: 'a@b.com', password: '123456', posts_viewable_by: visibility});
+			let viewer = await User.create({name: 'b', email: 'b@a.com', password: '123456'});
+			if(friends) await FriendRequest.create({requested_user_id: user.get('_id').toString(), requesting_user_id: viewer.get('_id').toString(), accepted: true});
+			if(fof){
+				let third_party = await User.create({name: 'c', email: 'c@d.com', password: '123456'});
+				await FriendRequest.create({requested_user_id: viewer.get('_id').toString(), requesting_user_id: third_party.get('_id').toString(), accepted: true});
+				await FriendRequest.create({requested_user_id: user.get('_id').toString(), requesting_user_id: third_party.get('_id').toString(), accepted: true});
+			}
+
+			return [user, viewer];
+		};
+
+		describe('if the users are friends', () => {
+			it('returns true', async () => {
+				let [user, viewer] = await createUsers(0, true);
+				let visible = await user.visibleTo(viewer.get('_id'));
+				expect(visible).to.be.ok();
+			});
+		});
+
+		describe('if the users are not friends', () => {
+			describe('if the users are friends of friends', () => {
+				describe('if the receiver has set post visibility to friends of friends', () => {
+					it('returns true', async () => {
+						let [user, viewer] = await createUsers(1, false, true);
+						let visible = await user.visibleTo(viewer.get('_id'));
+						expect(visible).to.be.ok();
+					});
+				});
+
+				describe('if the receiver has set post visibility to only friends', () => {
+					it('returns false', async () =>  {
+						let [user, viewer] = await createUsers(0, false, true);
+						let visible = await user.visibleTo(viewer.get('_id'));
+						expect(visible).to.not.be.ok();
+					});
+				});
+			});
+
+			describe('if the users are not friends of friends', () => {
+				it('returns false', async () => {
+					let [user, viewer] = await createUsers(1, false, false);
+					let visible = await user.visibleTo(viewer.get('_id'));
+					expect(visible).to.not.be.ok();
+				});
+			});
+		});
 	});
 });
