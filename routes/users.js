@@ -33,10 +33,29 @@ module.exports = (router, logger) => {
 		}
 	);
 
+	users.get('user', '/me',
+		authenticateUser,
+		async (ctx, next) => {
+			let user = await User.find(ctx.current_user_id);
 
-	users.post('user', '/:user_name', 
+			ctx.response.body = JSON.stringify({user: user.render()})
+			ctx.response.status = 200;
+		}
+	);
+
+	users.get('user', '/:name', 
+		authenticateUser,
+		async (ctx, next) => {
+			let user = (await User.where({name: ctx.params.name}, {limit: 1}))[0];
+
+			ctx.response.body = JSON.stringify({user: user.render('external')});
+			ctx.response.status = 200;
+		}
+	);
+
+
+	users.post('user', '/me', 
 		authenticateUser, 
-		authorizeUserByUserName, 
 		bodyParser, 
 		permittedParams, 
 		async (ctx, next) => {
@@ -47,10 +66,11 @@ module.exports = (router, logger) => {
 									'display_name', 'post_visibility', 'old_post_visibility')
 								.value();
 
-			await ctx.current_user.update(updateParams);
+			let user = await User.find(ctx.current_user_id);
+			await user.update(updateParams);
 
-			ctx.response.body = JSON.stringify({user: ctx.current_user.render()});
-			ctx.response.satus = 200;
+			ctx.response.body = JSON.stringify({user: user.render()});
+			ctx.response.status = 200;
 			await next();
 		}
 	);

@@ -33,7 +33,11 @@ const RENDERABLE_ATTRIBUTES = [
     'bio', 
     'display_name',
     'post_visibility',
-    'old_post_visibility'
+    'old_post_visibility',
+    'blocked',
+    'friends',
+    'friend_requests',
+    'requested_friends'
 ];
 
 const FriendRequest = require('./friend_request');
@@ -42,6 +46,7 @@ class User extends BaseModel {
     static get column_name(){ return 'users'; }
     static get before_validate(){ return BEFORE_VALIDATE; }
     static get renderable_attributes(){ return RENDERABLE_ATTRIBUTES; }
+    static get renderable_attributes_for_external(){ return ['name', 'display_name', 'avatar_url', 'bio']}
     
     _validate_email(){
         if( (this.new_record || this._changes.email) && !EMAIL_REGEX.test(this.get('email'))) this.errors.add('email', 'must be a valid email address');
@@ -118,7 +123,11 @@ class User extends BaseModel {
             bio: '',
             display_name: '',
             old_post_visibility: 0,
-            post_visibility: 0
+            post_visibility: 0,
+            blocked: [],
+            friends: [],
+            friend_requests: [],
+            requested_friends: []
         };
     }
 }
