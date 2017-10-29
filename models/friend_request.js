@@ -44,7 +44,7 @@ class FriendRequest extends BaseModel{
 		return ids;	
 	}
 
-	static async friends(user_id_1, user_id_2){
+	static async areFriends(user_id_1, user_id_2){
 		user_id_1 = user_id_1.toString();
 		user_id_2 = user_id_2.toString();
 		let q = { $in: [user_id_1, user_id_2]};
@@ -53,7 +53,7 @@ class FriendRequest extends BaseModel{
 	}
 
 	static async friendsOfFriends(user_id_1, user_id_2){
-		let friends = await FriendRequest.friends(user_id_1, user_id_2)
+		let friends = await FriendRequest.areFriends(user_id_1, user_id_2)
 		if(friends) return friends;
 
 		user_id_1 = user_id_1.toString();

@@ -48,7 +48,7 @@ module.exports = (router, logger) => {
 		authenticateUser,
 		async (ctx, next) => {
 			let post = await Post.find(ctx.params.id);
-			let friends = await FriendRequest.friends(post.get('user_id'), ctx.current_user_id);
+			let friends = await FriendRequest.areFriends(post.get('user_id'), ctx.current_user_id);
 
 			if(!friends) throw new Forbidden('you do not have permission to create this resource');
 
@@ -67,7 +67,7 @@ module.exports = (router, logger) => {
 		permittedParams,
 		async (ctx, next) => {
 			let post = await Post.find(ctx.params.id);
-			let friends = await FriendRequest.friends(post.get('user_id'), ctx.current_user_id);
+			let friends = await FriendRequest.areFriends(post.get('user_id'), ctx.current_user_id);
 			
 			if(!friends) throw new Forbidden('you do not have permission to create this resource');
 			
@@ -85,7 +85,7 @@ module.exports = (router, logger) => {
 		authenticateUser,
 		async (ctx, next) => {
 			let post = await Post.find(ctx.params.id);
-			let friends = await FriendRequest.friends(post.get('user_id'), ctx.current_user_id);
+			let friends = await FriendRequest.areFriends(post.get('user_id'), ctx.current_user_id);
 			
 			if(!friends) throw new Forbidden('you do not have permission to create this resource');
 

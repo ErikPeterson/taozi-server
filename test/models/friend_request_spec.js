@@ -70,22 +70,22 @@ describe('FriendRequest', () => {
 		})
 	});
 
-	describe('async .friends(user_id_1, user_id_2)', () => {
+	describe('async .areFriends(user_id_1, user_id_2)', () => {
 		it('returns true if an accepted friend request with the two specified ids exists', async () => {
 			let req = await FriendRequest.create({requesting_user_id: '1', requested_user_id: '2', accepted: true});
-			let result = await FriendRequest.friends('1', '2');
+			let result = await FriendRequest.areFriends('1', '2');
 			expect(result).to.be.ok();
 		});
 
 		it('returns false if an unaccepted friend request with the two specified ids exists', async () => {
 			let req = await FriendRequest.create({requesting_user_id: '1', requested_user_id: '2'});
-			let result = await FriendRequest.friends('1', '2');
+			let result = await FriendRequest.areFriends('1', '2');
 			expect(result).to.not.be.ok();
 
 		});
 
 		it('returns false if no friend request with the two specified ids exists', async () => {
-			let result = await FriendRequest.friends('1', '2');
+			let result = await FriendRequest.areFriends('1', '2');
 			expect(result).to.not.be.ok();
 		});
 	});

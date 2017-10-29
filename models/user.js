@@ -99,7 +99,7 @@ class User extends BaseModel {
 
     async visibleTo(user_id){
         if(this.get('posts_viewable_by') === 0){
-            let friends = await FriendRequest.friends(this.get('_id'), user_id);
+            let friends = await FriendRequest.areFriends(this.get('_id'), user_id);
             return friends;
         } else {
             let fof = await FriendRequest.friendsOfFriends(this.get('_id'), user_id);
