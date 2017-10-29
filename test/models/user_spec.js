@@ -177,7 +177,41 @@ describe('User', () => {
 					expect(e.full_messages[0]).to.match(/must be 200 characters or fewer/);
 				}
 			});
-		})
+		});
+
+		describe('posts_viewable_by', () => {
+			it('defaults to 1 (friends of friends)', async () => {
+				let user = await User.create({email: 'a@b.com', name: 'a', password: '123456'});
+				expect(user.get('posts_viewable_by')).to.be(1);
+			});
+
+			it('can only be 1 or 0', async () => {
+				let user = await User.create({email: 'a@b.com', name: 'a', password: '123456', posts_viewable_by: 0});
+				expect(user.get('posts_viewable_by')).to.be(0);
+				try{
+					await user.update({posts_viewable_by: 50});
+				} catch (e) {
+					expect(e.constructor.name).to.be('RecordInvalid');
+				}
+			});
+		});
+
+		describe('old_posts_viewable_by', () => {
+			it('defaults to 0', async () => {
+				let user = await User.create({email: 'a@b.com', name: 'a', password: '123456'});
+				expect(user.get('old_posts_viewable_by')).to.be(0);
+			});
+
+			it('can only be 1 or 0', async () => {
+				let user = await User.create({email: 'a@b.com', name: 'a', password: '123456', old_posts_viewable_by: 1});
+				expect(user.get('old_posts_viewable_by')).to.be(1);
+				try{
+					await user.update({old_posts_viewable_by: 50});
+				} catch (e) {
+					expect(e.constructor.name).to.be('RecordInvalid');
+				}
+			});
+		});
 	});
 
 	describe('async #authenticate(password)', () => {
