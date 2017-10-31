@@ -6,7 +6,6 @@ const User = require('../../models/user');
 const Auth = require('../../models/auth');
 const DB = require('../support/db_cleaner');
 const API = require('../support/api');
-const FriendRequest = require('../../models/friend_request');
 const Comment = require('../../models/comment');
 
 describe('/posts', () => {
@@ -39,7 +38,8 @@ describe('/posts', () => {
 		describe('with an authenticated user who is a friend of the owner of the post', () => {
 
 			it('creates a comment and increments the associated post\'s comment_count', async () => {
-				await FriendRequest.create({requested_user_id: creator.get('_id').toString(), requesting_user_id: commenter.get('_id').toString(), accepted: true});
+				await creator.update({friends: [commenter.get('_id').toString()]})
+				await commenter.update({friends: [creator.get('_id').toString()]})
 
 				let resp = await API.post(path, params, headers);
 				expect(resp.statusCode).to.be(201);
@@ -86,7 +86,8 @@ describe('/posts', () => {
 
 		describe('with an authenticated friend of the post author', () => {
 			it('returns a list of the post comments', async () => {
-				await FriendRequest.create({requested_user_id: creator.get('_id').toString(), requesting_user_id: commenter.get('_id').toString(), accepted: true});
+				await creator.update({friends: [commenter.get('_id').toString()]});
+				await commenter.update({friends: [creator.get('_id').toString()]});
 				let resp = await API.get(path, null, headers);
 				expect(resp.statusCode).to.be(200);
 				expect(resp.body.comments.length).to.be(4);

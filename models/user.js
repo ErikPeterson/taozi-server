@@ -40,7 +40,6 @@ const RENDERABLE_ATTRIBUTES = [
     'requested_friends'
 ];
 
-const FriendRequest = require('./friend_request');
 const RecordInvalid = require('./errors/record_invalid');
 
 class User extends BaseModel {

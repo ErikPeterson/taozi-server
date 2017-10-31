@@ -2,7 +2,6 @@
 
 const User = require('../models/user');
 const Auth = require('../models/auth');
-const FriendRequest = require('../models/friend_request');
 const Unauthorized = require('../lib/errors/unauthorized');
 const Forbidden = require('../lib/errors/forbidden');
 const BadRequest = require('../lib/errors/bad_request');

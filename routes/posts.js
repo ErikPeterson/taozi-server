@@ -3,9 +3,9 @@
 const _ = require('lodash');
 const Post = require('../models/post');
 const Comment = require('../models/comment');
+const User = require('../models/user');
 const Forbidden = require('../lib/errors/forbidden');
 const Router = require('koa-router');
-const FriendRequest = require('../models/friend_request');
 
 const posts = new Router();
 
@@ -48,9 +48,10 @@ module.exports = (router, logger) => {
 		authenticateUser,
 		async (ctx, next) => {
 			let post = await Post.find(ctx.params.id);
-			let friends = await FriendRequest.areFriends(post.get('user_id'), ctx.current_user_id);
+			let post_user = await User.find(post.get('user_id'));
+			let visible = await post_user.visibleTo(ctx.current_user_id);
 
-			if(!friends) throw new Forbidden('you do not have permission to create this resource');
+			if(!visible) throw new Forbidden('you do not have permission to create this resource');
 
 			let comments = await Comment.where({post_id: post.get('_id').toString()});
 
@@ -67,9 +68,10 @@ module.exports = (router, logger) => {
 		permittedParams,
 		async (ctx, next) => {
 			let post = await Post.find(ctx.params.id);
-			let friends = await FriendRequest.areFriends(post.get('user_id'), ctx.current_user_id);
+			let post_user = await User.find(post.get('user_id'));
+			let visible = await post_user.visibleTo(ctx.current_user_id);
 			
-			if(!friends) throw new Forbidden('you do not have permission to create this resource');
+			if(!visible) throw new Forbidden('you do not have permission to create this resource');
 			
 			let comment_params = _.merge({user_id: ctx.current_user_id, post_id: post.get('_id').toString()}, ctx.request.params.require('comment').permit('text').value());
 			let comment = await Comment.create(comment_params);
@@ -85,9 +87,10 @@ module.exports = (router, logger) => {
 		authenticateUser,
 		async (ctx, next) => {
 			let post = await Post.find(ctx.params.id);
-			let friends = await FriendRequest.areFriends(post.get('user_id'), ctx.current_user_id);
+			let post_user = await User.find(post.get('user_id'));
+			let visible = await post_user.visibleTo(ctx.current_user_id);
 			
-			if(!friends) throw new Forbidden('you do not have permission to create this resource');
+			if(!visible) throw new Forbidden('you do not have permission to create this resource');
 
 			post.incrementLikeCount();
 			ctx.status = 201;

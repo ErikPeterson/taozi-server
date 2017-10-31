@@ -3,7 +3,6 @@
 const expect = require('expect.js');
 const DB = require('../support/db_cleaner');
 const User = require('../../models/user');
-const FriendRequest = require('../../models/friend_request');
 
 describe('User', () => {
 	before(async () => {
