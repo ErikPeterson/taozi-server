@@ -28,7 +28,7 @@ module.exports = (router, logger) => {
 			let post = await Post.create(_.merge({user_id: ctx.current_user_id}, post_params));
 
 			ctx.response.status = 201;
-			ctx.response.body = JSON.stringify({post: post.render()});
+			ctx.response.body = {post: post.render()};
 			await next();
 		}
 	);
@@ -56,7 +56,7 @@ module.exports = (router, logger) => {
 			let comments = await Comment.where({post_id: post.get('_id').toString()});
 
 			ctx.status = 200;
-			ctx.body = JSON.stringify({comments: comments.map( c => {return { comment: c.render() }})});
+			ctx.body = {comments: comments.map( c => {return { comment: c.render() }})};
 
 			await next();
 		}
@@ -77,7 +77,7 @@ module.exports = (router, logger) => {
 			let comment = await Comment.create(comment_params);
 			post.incrementCommentCount();
 			ctx.status = 201;
-			ctx.body = JSON.stringify({comment: comment.render() });
+			ctx.body = {comment: comment.render() };
 
 			await next();
 		}

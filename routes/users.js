@@ -27,7 +27,7 @@ module.exports = (router, logger) => {
 		                        .value();
 
 		    let user = await User.create(userParams);
-		    ctx.response.body = JSON.stringify({user: user.render()});
+		    ctx.response.body = {user: user.render()};
 		    ctx.response.status = 201;
 		}
 	);
@@ -36,7 +36,7 @@ module.exports = (router, logger) => {
 		authenticateUser,
 		async (ctx, next) => {
 			let user = await User.find(ctx.current_user_id);
-			ctx.response.body = JSON.stringify({user: user.render()});
+			ctx.response.body = {user: user.render()};
 			ctx.response.status = 200;
 		}
 	);
@@ -47,7 +47,7 @@ module.exports = (router, logger) => {
 		async (ctx, next) => {
 			let user = (await User.where({name: ctx.params.name}, {limit: 1}))[0];
 
-			ctx.response.body = JSON.stringify({user: user.render('external')});
+			ctx.response.body = {user: user.render('external')};
 			ctx.response.status = 200;
 		}
 	);
@@ -67,7 +67,7 @@ module.exports = (router, logger) => {
 			let user = await User.find(ctx.current_user_id);
 			await user.update(updateParams);
 
-			ctx.response.body = JSON.stringify({user: user.render()});
+			ctx.response.body = {user: user.render()};
 			ctx.response.status = 200;
 		}
 	);
@@ -78,7 +78,7 @@ module.exports = (router, logger) => {
 			let user = await User.find(ctx.current_user_id);
 			await user.befriend(ctx.params.user_id);
 
-			ctx.response.body = JSON.stringify({});
+			ctx.response.body = {};
 			ctx.response.status = 201;
 		}
 	);
@@ -89,7 +89,7 @@ module.exports = (router, logger) => {
 			let user = await User.find(ctx.current_user_id);
 			await user.ignore(ctx.params.user_id);
 
-			ctx.response.body = JSON.stringify({});
+			ctx.response.body = {};
 			ctx.response.status = 201;
 		}
 	);
@@ -103,7 +103,7 @@ module.exports = (router, logger) => {
 
 			await user.requestFriendship(ctx.current_user_id);
 
-			ctx.response.body = JSON.stringify({});
+			ctx.response.body = {};
 			ctx.response.status = 201;
 		}
 	);
