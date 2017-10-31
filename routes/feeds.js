@@ -30,11 +30,19 @@ module.exports = (router, logger) => {
         bodyParser,
         async (ctx, next) => {
             let page = +ctx.query.page || 1;
-            let posts = await Post.where({user_id: ctx.author.get('_id').toString()}, {limit: 5, page: page, sort: ['_id', -1]});
+            let query = {user_id: ctx.author.get('_id').toString()};
+            
+            if(ctx.query.after){
+                let date = new Date(ctx.query.after);
+                query.created_at = { $gte: date };
+            }
+
+            let posts = await Post.where(query, {limit: 5, page: page, sort: ['_id', -1]});
             if(posts.length === 0 && page !== 1) throw new RecordNotFound('Post', {user_id: ctx.author.get('_id'), page: page});
             let meta = { page: page };
             meta.next_page = posts.next_page ? page + 1 : null;
             meta.prev_page = page === 1 ? null : page - 1;
+            meta.after = ctx.query.after || null;
             
             ctx.status = 200;
             ctx.body = {feed: { meta: meta, posts: posts.map( p => p.render() ) }};

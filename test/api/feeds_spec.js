@@ -3,10 +3,12 @@
 const expect = require('expect.js');
 const API = require('../support/api');
 const DB = require('../support/db_cleaner');
+const sinon = require('sinon');
 
 const User = require('../../models/user');
 const Auth = require('../../models/auth');
 const Post = require('../../models/post');
+
 
 const setUpFeed = async (post_count, friends) => {
     let author = await User.create({email: 'a@b.com', name: 'a', password: '123456'});
@@ -64,6 +66,45 @@ describe('/feeds', () => {
                         expect(resp.body.feed.meta.next_page).to.be(2);
                         expect(resp.body.feed.meta.prev_page).to.be(null);
                         expect(resp.body.feed.user).to.be.ok();
+                    });
+                });
+
+                describe('with an after parameter', () => {
+                    let clock;
+
+                    before(() => { clock = sinon.useFakeTimers(); })
+                    after(() => { clock.restore(); })
+                    it('returns the most recent page of posts created after the specified date', async () => {
+                        let [author, user, auth_header, posts] = await setUpFeed(5, true);
+                        clock.tick(100000);
+                        let new_posts = [];
+                        let date = new Date();
+                        clock.tick(1);
+                        for(let i = 0; i < 6; i++) {
+                            let post = await Post.create({user_id: author.get('_id').toString(), body: [{type: 'text', content: ''}]});
+                            new_posts.push(post);
+                            clock.tick(5);
+                        }
+
+                        let resp = await API.get(`/feeds/${author.get('name')}?after=${date.toISOString()}`, null, auth_header);
+
+                        expect(resp.statusCode).to.be(200);
+                        expect(resp.body.feed.posts.length).to.be(5);
+                        expect(resp.body.feed.meta.after).to.be(date.toISOString());
+                        expect(resp.body.feed.meta.page).to.be(1);
+                        expect(resp.body.feed.meta.prev_page).to.be(null);
+                        expect(resp.body.feed.meta.next_page).to.be(2);
+
+
+                        let second_resp = await API.get(`/feeds/${author.get('name')}?page=2&after=${date.toISOString()}`, null, auth_header);
+
+
+                        expect(second_resp.statusCode).to.be(200);
+                        expect(second_resp.body.feed.meta.after).to.be(date.toISOString());
+                        expect(second_resp.body.feed.meta.page).to.be(2);
+                        expect(second_resp.body.feed.meta.prev_page).to.be(1);
+                        expect(second_resp.body.feed.meta.next_page).to.be(null);
+                        expect(second_resp.body.feed.posts.length).to.be(1);
                     });
                 });
 
