@@ -267,8 +267,8 @@ describe('User', () => {
 
 	describe('async #befriend(user_id)', () => {
 		it('adds the users as friends and removes any friend requests between them', async () => {
-			let user = await User.create({name: 'a', email: 'a@b.com', password: '123456'});
-			let user2 = await User.create({name: 'b', email: 'b@a.com', password: '123456'});
+			let user = await User.create({name: 'a', email: 'a@b.com', password: '123456', friend_requests: [{user_id: '2', date: new Date() }]});
+			let user2 = await User.create({name: 'b', email: 'b@a.com', password: '123456', requested_friends: [{user_id: '2', date: new Date() }]});
 
 			await user.requestFriendship(user2.get('_id'));
 			await user.befriend(user2.get('_id'));
@@ -279,8 +279,8 @@ describe('User', () => {
 			expect(user.get('friends').includes(user2.get('_id').toString())).to.be.ok();
 			expect(user2.get('friends').includes(user.get('_id').toString())).to.be.ok();
 
-			expect(user.get('friend_requests')).to.be.empty();
-			expect(user2.get('requested_friends')).to.be.empty();
+			expect(user.get('friend_requests').length).to.be(1);
+			expect(user2.get('requested_friends').length).to.be(1);
 		});
 
 		describe('if the users are already friends', () => {
@@ -296,6 +296,43 @@ describe('User', () => {
 
 				try{
 					await user.befriend(user2.get('_id'));
+					expect().fail()
+				} catch(e) {
+					expect(e.constructor.name).to.be('RecordInvalid');
+				}
+			});
+		});
+	});
+
+
+	describe('async #ignore(user_id)', () => {
+		it('removes any friend requests between the users', async () => {
+			let user = await User.create({name: 'a', email: 'a@b.com', password: '123456', friend_requests: [{user_id: '2', date: new Date() }]});
+			let user2 = await User.create({name: 'b', email: 'b@a.com', password: '123456', requested_friends: [{user_id: '2', date: new Date() }]});
+
+			await user.requestFriendship(user2.get('_id'));
+			await user.ignore(user2.get('_id'));
+
+			await user.reload();
+			await user2.reload();
+
+			expect(user.get('friend_requests').length).to.be(1);
+			expect(user2.get('requested_friends').length).to.be(1);
+		});
+
+		describe('if the users are already friends', () => {
+			it('throws an error', async () => {
+				let user = await User.create({name: 'a', email: 'a@b.com', password: '123456'});
+				let user2 = await User.create({name: 'b', email: 'b@a.com', password: '123456'});
+
+				await user.requestFriendship(user2.get('_id'));
+				await user.befriend(user2.get('_id'));
+
+				await user.reload();
+				await user2.reload();				
+
+				try{
+					await user.ignore(user2.get('_id'));
 					expect().fail()
 				} catch(e) {
 					expect(e.constructor.name).to.be('RecordInvalid');
