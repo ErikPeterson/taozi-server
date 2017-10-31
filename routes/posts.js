@@ -3,9 +3,9 @@
 const _ = require('lodash');
 const Post = require('../models/post');
 const Comment = require('../models/comment');
+const User = require('../models/user');
 const Forbidden = require('../lib/errors/forbidden');
 const Router = require('koa-router');
-const FriendRequest = require('../models/friend_request');
 
 const posts = new Router();
 
@@ -28,7 +28,7 @@ module.exports = (router, logger) => {
 			let post = await Post.create(_.merge({user_id: ctx.current_user_id}, post_params));
 
 			ctx.response.status = 201;
-			ctx.response.body = JSON.stringify({post: post.render()});
+			ctx.response.body = {post: post.render()};
 			await next();
 		}
 	);
@@ -48,14 +48,15 @@ module.exports = (router, logger) => {
 		authenticateUser,
 		async (ctx, next) => {
 			let post = await Post.find(ctx.params.id);
-			let friends = await FriendRequest.friends(post.get('user_id'), ctx.current_user_id);
+			let post_user = await User.find(post.get('user_id'));
+			let visible = await post_user.visibleTo(ctx.current_user_id);
 
-			if(!friends) throw new Forbidden('you do not have permission to create this resource');
+			if(!visible) throw new Forbidden('you do not have permission to create this resource');
 
 			let comments = await Comment.where({post_id: post.get('_id').toString()});
 
 			ctx.status = 200;
-			ctx.body = JSON.stringify({comments: comments.map( c => {return { comment: c.render() }})});
+			ctx.body = {comments: comments.map( c => {return { comment: c.render() }})};
 
 			await next();
 		}
@@ -67,15 +68,16 @@ module.exports = (router, logger) => {
 		permittedParams,
 		async (ctx, next) => {
 			let post = await Post.find(ctx.params.id);
-			let friends = await FriendRequest.friends(post.get('user_id'), ctx.current_user_id);
+			let post_user = await User.find(post.get('user_id'));
+			let visible = await post_user.visibleTo(ctx.current_user_id);
 			
-			if(!friends) throw new Forbidden('you do not have permission to create this resource');
+			if(!visible) throw new Forbidden('you do not have permission to create this resource');
 			
 			let comment_params = _.merge({user_id: ctx.current_user_id, post_id: post.get('_id').toString()}, ctx.request.params.require('comment').permit('text').value());
 			let comment = await Comment.create(comment_params);
 			post.incrementCommentCount();
 			ctx.status = 201;
-			ctx.body = JSON.stringify({comment: comment.render() });
+			ctx.body = {comment: comment.render() };
 
 			await next();
 		}
@@ -85,9 +87,10 @@ module.exports = (router, logger) => {
 		authenticateUser,
 		async (ctx, next) => {
 			let post = await Post.find(ctx.params.id);
-			let friends = await FriendRequest.friends(post.get('user_id'), ctx.current_user_id);
+			let post_user = await User.find(post.get('user_id'));
+			let visible = await post_user.visibleTo(ctx.current_user_id);
 			
-			if(!friends) throw new Forbidden('you do not have permission to create this resource');
+			if(!visible) throw new Forbidden('you do not have permission to create this resource');
 
 			post.incrementLikeCount();
 			ctx.status = 201;

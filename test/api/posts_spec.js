@@ -6,7 +6,6 @@ const User = require('../../models/user');
 const Auth = require('../../models/auth');
 const DB = require('../support/db_cleaner');
 const API = require('../support/api');
-const FriendRequest = require('../../models/friend_request');
 
 describe('/posts', () => {
 	before(async () => {
@@ -83,7 +82,8 @@ describe('/posts', () => {
 
 		describe('with a logged in user that is friends with the post owner', () => {
 			it('adds a like to the post', async () => {
-				await FriendRequest.create({requesting_user_id: liker.get('_id').toString(), requested_user_id: user.get('_id').toString(), accepted: true});
+				await liker.update({friends: [user.get('_id').toString()]});
+				await user.update({friends: [liker.get('_id').toString()]});
 				let resp = await API.post(path, params, headers);
 				expect(resp.statusCode).to.be(201);
 				await post.reload();

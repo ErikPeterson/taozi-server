@@ -38,7 +38,7 @@ describe('ModelBase', () => {
 		});
 	});
 
-	describe('#render()', () => {
+	describe('#render(for=null)', () => {
 		describe('with no attributes set', () => {
 			it('returns a hash with empty values', () => {
 				let inst = new FakeModel();
@@ -54,24 +54,48 @@ describe('ModelBase', () => {
 					}
 				});
 			});
-		});
+		});;
 
 		describe('with attributes set', () => {
-			it('returns a hash with values from the instance', () => {
-				let attributes = {
-					'_id': '1234', 
-					'name': 'Mickey', 
-					'options': {
-						'hey': 'a', 
-						'now': {
-							'b': 'c'
-						}, 
-						'what': {
-							'yes': 'no', 
-							'no': 'yes'
-						}
+			let attributes = {
+				'_id': '1234', 
+				'name': 'Mickey', 
+				'options': {
+					'hey': 'a', 
+					'now': {
+						'b': 'c'
+					}, 
+					'what': {
+						'yes': 'no', 
+						'no': 'yes'
 					}
 				}
+			};
+
+			describe('with for passed', () => {
+				describe('if there is a `renderable_attributes_for_x` defined', () => {
+					it('returns a hash of the attributes specified', () => {
+						let expected = {
+							name: 'Mickey',
+							options: {
+								hey: 'a'
+							}
+						};
+
+						let inst = new FakeModel(attributes);
+						expect(inst.render('external')).to.eql(expected);
+					});
+				});
+
+				describe('if there is no attribute set defined for x', () => {
+					it('throws an error', () => {
+						let inst = new FakeModel(attributes);
+						expect(() => { inst.render('blah') }).to.throwError();
+					});
+				})
+			});
+
+			it('returns a hash with values from the instance', () => {
 				let expected = {
 					'_id': '1234',
 					'name': 'Mickey',
@@ -113,11 +137,7 @@ describe('ModelBase', () => {
 				describe('and the property has been changed since last save', () => {
 					it('returns the new value', async () => {
 						let inst = new FakeModel({name: 'butt'});
-						try{
-							await inst.save();
-						} catch(e) {
-							console.log(e.full_messages);
-						}
+						await inst.save();
 						inst.set('name', 'bum');
 						expect(inst.get('name')).to.be('bum');
 					});
@@ -200,7 +220,7 @@ describe('ModelBase', () => {
 			describe('when the record does not exist', () => {
 				it('throws a RecordNotFound error', async () => {
 					try{
-						await FakeModel.find(1).then(console.log);
+						await FakeModel.find(1);
 					} catch(e) {
 						expect(e.constructor.name).to.be('RecordNotFound');
 					}
@@ -208,7 +228,7 @@ describe('ModelBase', () => {
 			});
 		});
 
-		describe('.where(query, limit)', () => {
+		describe('.where(query, options={})', () => {
 			it('returns all matching data', async () => {
 				let inst = await FakeModel.create({name: 'hey'});
 				let inst2 = await FakeModel.create({name: 'hey'});
@@ -223,7 +243,7 @@ describe('ModelBase', () => {
 					let inst = await FakeModel.create({name: 'hey'});
 					let inst2 = await FakeModel.create({name: 'hey'});
 
-					let results = await FakeModel.where({name: 'hey'}, 1);
+					let results = await FakeModel.where({name: 'hey'}, {limit: 1});
 					expect(results.length).to.be(1);
 				});
 			});

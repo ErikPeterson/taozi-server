@@ -1,5 +1,8 @@
 'use strict';
 
+const statuses = require('statuses');
+statuses[420] = 'Increase your chill';
+
 const Koa = require('koa');
 const app = new Koa();
 

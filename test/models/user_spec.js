@@ -177,7 +177,41 @@ describe('User', () => {
 					expect(e.full_messages[0]).to.match(/must be 200 characters or fewer/);
 				}
 			});
-		})
+		});
+
+		describe('post_visibility', () => {
+			it('defaults to 1 (friends of friends)', async () => {
+				let user = await User.create({email: 'a@b.com', name: 'a', password: '123456'});
+				expect(user.get('post_visibility')).to.be(1);
+			});
+
+			it('can only be 1 or 0', async () => {
+				let user = await User.create({email: 'a@b.com', name: 'a', password: '123456', post_visibility: 0});
+				expect(user.get('post_visibility')).to.be(0);
+				try{
+					await user.update({post_visibility: 50});
+				} catch (e) {
+					expect(e.constructor.name).to.be('RecordInvalid');
+				}
+			});
+		});
+
+		describe('old_post_visibility', () => {
+			it('defaults to 0', async () => {
+				let user = await User.create({email: 'a@b.com', name: 'a', password: '123456'});
+				expect(user.get('old_post_visibility')).to.be(0);
+			});
+
+			it('can only be 1 or 0', async () => {
+				let user = await User.create({email: 'a@b.com', name: 'a', password: '123456', old_post_visibility: 1});
+				expect(user.get('old_post_visibility')).to.be(1);
+				try{
+					await user.update({old_post_visibility: 50});
+				} catch (e) {
+					expect(e.constructor.name).to.be('RecordInvalid');
+				}
+			});
+		});
 	});
 
 	describe('async #authenticate(password)', () => {
@@ -212,5 +246,197 @@ describe('User', () => {
 				expect(authentic).to.not.be.ok();
 			});
 		})
+	});
+
+	describe('#friendRequested(user_id)', () => {
+		it('returns true if the user id provided is in the receiver\'s friend requests', async () => {
+			let user = await User.create({name: 'a', email: 'a@b.com', password: '123456', friend_requests: [ { user_id: '1'}]});
+			expect(user.friendRequested('1')).to.be.ok();
+		});
+
+		it('returns true if the user id provided is in the receiver\'s requested friends', async () => {
+			let user = await User.create({name: 'a', email: 'a@b.com', password: '123456', requested_friends: [ { user_id: '1'}]});
+			expect(user.friendRequested('1')).to.be.ok();
+		});
+
+		it('returns false if the user id is not in either list', async () => {
+			let user = await User.create({name: 'a', email: 'a@b.com', password: '123456'});
+			expect(user.friendRequested('1')).to.not.be.ok();
+		});
+	});
+
+	describe('async #befriend(user_id)', () => {
+		it('adds the users as friends and removes any friend requests between them', async () => {
+			let user = await User.create({name: 'a', email: 'a@b.com', password: '123456', friend_requests: [{user_id: '2', date: new Date() }]});
+			let user2 = await User.create({name: 'b', email: 'b@a.com', password: '123456', requested_friends: [{user_id: '2', date: new Date() }]});
+
+			await user.requestFriendship(user2.get('_id'));
+			await user.befriend(user2.get('_id'));
+
+			await user.reload();
+			await user2.reload();
+
+			expect(user.get('friends').includes(user2.get('_id').toString())).to.be.ok();
+			expect(user2.get('friends').includes(user.get('_id').toString())).to.be.ok();
+
+			expect(user.get('friend_requests').length).to.be(1);
+			expect(user2.get('requested_friends').length).to.be(1);
+		});
+
+		describe('if the users are already friends', () => {
+			it('throws an error', async () => {
+				let user = await User.create({name: 'a', email: 'a@b.com', password: '123456'});
+				let user2 = await User.create({name: 'b', email: 'b@a.com', password: '123456'});
+
+				await user.requestFriendship(user2.get('_id'));
+				await user.befriend(user2.get('_id'));
+
+				await user.reload();
+				await user2.reload();				
+
+				try{
+					await user.befriend(user2.get('_id'));
+					expect().fail()
+				} catch(e) {
+					expect(e.constructor.name).to.be('RecordInvalid');
+				}
+			});
+		});
+	});
+
+
+	describe('async #ignore(user_id)', () => {
+		it('removes any friend requests between the users', async () => {
+			let user = await User.create({name: 'a', email: 'a@b.com', password: '123456', friend_requests: [{user_id: '2', date: new Date() }]});
+			let user2 = await User.create({name: 'b', email: 'b@a.com', password: '123456', requested_friends: [{user_id: '2', date: new Date() }]});
+
+			await user.requestFriendship(user2.get('_id'));
+			await user.ignore(user2.get('_id'));
+
+			await user.reload();
+			await user2.reload();
+
+			expect(user.get('friend_requests').length).to.be(1);
+			expect(user2.get('requested_friends').length).to.be(1);
+		});
+
+		describe('if the users are already friends', () => {
+			it('throws an error', async () => {
+				let user = await User.create({name: 'a', email: 'a@b.com', password: '123456'});
+				let user2 = await User.create({name: 'b', email: 'b@a.com', password: '123456'});
+
+				await user.requestFriendship(user2.get('_id'));
+				await user.befriend(user2.get('_id'));
+
+				await user.reload();
+				await user2.reload();				
+
+				try{
+					await user.ignore(user2.get('_id'));
+					expect().fail()
+				} catch(e) {
+					expect(e.constructor.name).to.be('RecordInvalid');
+				}
+			});
+		});
+	});
+
+	describe('async #requestFriendship(user_id)', () => {
+		it('adds a friend request between the two users', async () => {
+			let user = await User.create({name: 'a', email: 'a@b.com', password: '123456'});
+			let user2 = await User.create({name: 'b', email: 'b@a.com', password: '123456'});
+
+			await user.requestFriendship(user2.get('_id'));
+			await user.reload();
+			expect(user.get('friend_requests')[0].user_id).to.be(user2.get('_id').toString());
+			await user2.reload();
+			expect(user2.get('requested_friends')[0].user_id).to.be(user.get('_id').toString());
+		});
+
+		describe('if the users are already friends', () => {
+			it('throws an error', async () => {
+				let user = await User.create({name: 'a', email: 'a@b.com', password: '123456'});
+				let user2 = await User.create({name: 'b', email: 'b@a.com', password: '123456'});
+				await user2.requestFriendship(user.get('_id'));
+				await user2.befriend(user.get('_id'));
+				await user2.reload();
+				try{
+					await user2.requestFriendship(user.get('_id'));
+					expect().fail();
+				} catch(e) {
+					expect(e.constructor.name).to.be('RecordInvalid');
+				}
+			});
+		});
+
+		describe('if there is already a friend request in place', () => {
+			it('throws an error', async () => {
+				let user = await User.create({name: 'a', email: 'a@b.com', password: '123456'});
+				let user2 = await User.create({name: 'b', email: 'b@a.com', password: '123456'});
+				await user.requestFriendship(user2.get('_id'));
+				await user2.reload();
+				try{
+					await user2.requestFriendship(user.get('_id'));
+					expect().fail();
+				} catch(e) {
+					expect(e.constructor.name).to.be('RecordInvalid');
+				}
+			});
+		});
+	});
+
+	describe('async #visibleTo(user_id)', () => {
+		let createUsers = async (visibility, friends, fof) => {
+			let user = await User.create({name: 'a', email: 'a@b.com', password: '123456', post_visibility: visibility});
+			let viewer = await User.create({name: 'b', email: 'b@a.com', password: '123456'});
+			if(friends){
+				await  user.update({ friends: [viewer.get('_id').toString()] })
+				await  viewer.update({ friends: [user.get('_id').toString()] })
+			} 
+
+			if(fof){
+				let third_party = await User.create({name: 'c', email: 'c@d.com', password: '123456', friends: [user.get('_id').toString(), viewer.get('_id').toString()]});
+				await user.update({ friends: (user.get('friends') || []).concat(third_party.get('_id').toString() )})
+				await viewer.update({ friends: (viewer.get('friends') || []).concat(third_party.get('_id').toString() )})
+			}
+
+			return [user, viewer];
+		};
+
+		describe('if the users are friends', () => {
+			it('returns true', async () => {
+				let [user, viewer] = await createUsers(0, true);
+				let visible = await user.visibleTo(viewer.get('_id'));
+				expect(visible).to.be.ok();
+			});
+		});
+
+		describe('if the users are not friends', () => {
+			describe('if the users are friends of friends', () => {
+				describe('if the receiver has set post visibility to friends of friends', () => {
+					it('returns true', async () => {
+						let [user, viewer] = await createUsers(1, false, true);
+						let visible = await user.visibleTo(viewer.get('_id'));
+						expect(visible).to.be.ok();
+					});
+				});
+
+				describe('if the receiver has set post visibility to only friends', () => {
+					it('returns false', async () =>  {
+						let [user, viewer] = await createUsers(0, false, true);
+						let visible = await user.visibleTo(viewer.get('_id'));
+						expect(visible).to.not.be.ok();
+					});
+				});
+			});
+
+			describe('if the users are not friends of friends', () => {
+				it('returns false', async () => {
+					let [user, viewer] = await createUsers(1, false, false);
+					let visible = await user.visibleTo(viewer.get('_id'));
+					expect(visible).to.not.be.ok();
+				});
+			});
+		});
 	});
 });

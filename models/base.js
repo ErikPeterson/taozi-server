@@ -62,8 +62,9 @@ class ModelBase {
         this.errors = new Errors();
     }
 
-    render(){
-        return processRenderableAttributes(this.constructor.renderable_attributes, this._attributes)
+    render(role){
+        if(role) return processRenderableAttributes(this.constructor['renderable_attributes_for_' + role], this._attributes);
+        return processRenderableAttributes(this.constructor.renderable_attributes, this._attributes);
     }
 
     get new_record(){
@@ -236,10 +237,12 @@ class ModelBase {
                 })
     }
 
-    static async where(query, limit){
-        return DB.where(this.column_name, query, limit)
+    static async where(query, options={}){
+        return DB.where(this.column_name, query, options)
                 .then((results) => {
-                    return results.map((res) => new this(res));
+                    let page = results.map((res) => new this(res));
+                    page.next_page = results.next_page;
+                    return page; 
                 })
     }
 

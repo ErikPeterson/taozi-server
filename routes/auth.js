@@ -16,7 +16,7 @@ module.exports = (router, logger) => {
 							.value();
 		try{
 			let auth = await Auth.createByCredentials(authParams);
-			ctx.response.body = JSON.stringify({auth: auth.render()});
+			ctx.response.body = {auth: auth.render()};
 			ctx.response.status = 201;
 		} catch(e) {
 			if(e.constructor.name === 'RecordInvalid') throw new Unauthorized('no user with those credentials could be found');

@@ -32,8 +32,7 @@ class Auth extends BaseModel {
 
 	static async createByCredentials(creds){
 		let auth = new Auth();
-		let users = await User.where({email: creds.email}, 1);
-		let user = users[0];
+		let user = (await User.where({email: creds.email}, {limit: 1}))[0];
 		if(!user) await auth.save();
 		let authenticated = await user.authenticate(creds.password);
 		if(!authenticated) await auth.save();

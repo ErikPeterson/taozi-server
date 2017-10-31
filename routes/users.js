@@ -2,10 +2,10 @@
 
 const User = require('../models/user');
 const Auth = require('../models/auth');
-const FriendRequest = require('../models/friend_request');
 const Unauthorized = require('../lib/errors/unauthorized');
 const Forbidden = require('../lib/errors/forbidden');
 const BadRequest = require('../lib/errors/bad_request');
+const IncreaseYourChill = require('../lib/errors/increase_your_chill');
 const Router = require('koa-router');
 const users = new Router();
 
@@ -21,32 +21,90 @@ module.exports = (router, logger) => {
 		permittedParams, 
 		async (ctx, next) => {
 		    let userParams = ctx.request.params.require('user')
-		                        .permit('name', 'email', 'password')
+		                        .permit(
+		                        	'name', 'email', 'password', 'post_visibility', 
+		                        	'old_post_visibility', 'bio', 'display_name', 'avatar_url')
 		                        .value();
 
 		    let user = await User.create(userParams);
-		    ctx.response.body = JSON.stringify({user: user.render()});
+		    ctx.response.body = {user: user.render()};
 		    ctx.response.status = 201;
-		    await next();
+		}
+	);
+
+	users.get('user', '/me',
+		authenticateUser,
+		async (ctx, next) => {
+			let user = await User.find(ctx.current_user_id);
+			ctx.response.body = {user: user.render()};
+			ctx.response.status = 200;
 		}
 	);
 
 
-	users.post('user', '/:user_name', 
+	users.get('user', '/:name', 
+		authenticateUser,
+		async (ctx, next) => {
+			let user = (await User.where({name: ctx.params.name}, {limit: 1}))[0];
+
+			ctx.response.body = {user: user.render('external')};
+			ctx.response.status = 200;
+		}
+	);
+
+	users.post('user', '/me', 
 		authenticateUser, 
-		authorizeUserByUserName, 
 		bodyParser, 
 		permittedParams, 
 		async (ctx, next) => {
 
 			let updateParams = ctx.request.params.require('user')
-								.permit('email', 'password', 'name', 'avatar_url', 'bio', 'display_name').value();
+								.permit(
+									'email', 'password', 'name', 'avatar_url', 'bio', 
+									'display_name', 'post_visibility', 'old_post_visibility')
+								.value();
 
-			await ctx.current_user.update(updateParams);
+			let user = await User.find(ctx.current_user_id);
+			await user.update(updateParams);
 
-			ctx.response.body = JSON.stringify({user: ctx.current_user.render()});
-			ctx.response.satus = 200;
-			await next();
+			ctx.response.body = {user: user.render()};
+			ctx.response.status = 200;
+		}
+	);
+
+	users.post('user_accept_friend_request', '/me/friend_requests/:user_id/accept',
+		authenticateUser,
+		async (ctx, next) => {
+			let user = await User.find(ctx.current_user_id);
+			await user.befriend(ctx.params.user_id);
+
+			ctx.response.body = {};
+			ctx.response.status = 201;
+		}
+	);
+
+	users.post('user_ignore_friend_request', '/me/friend_requests/:user_id/ignore',
+		authenticateUser,
+		async (ctx, next) => {
+			let user = await User.find(ctx.current_user_id);
+			await user.ignore(ctx.params.user_id);
+
+			ctx.response.body = {};
+			ctx.response.status = 201;
+		}
+	);
+
+	users.post('user_friend_requests', '/:name/friend_requests',
+		authenticateUser,
+		async (ctx, next) => {
+			let user = (await User.where({name: ctx.params.name}, {limit: 1}))[0];
+			if((user.get('friends') || []).includes(ctx.current_user_id)) throw new IncreaseYourChill('you are already friends');
+			if(user.friendRequested(ctx.current_user_id)) throw new IncreaseYourChill('you cannot create a new friend request with this user');
+
+			await user.requestFriendship(ctx.current_user_id);
+
+			ctx.response.body = {};
+			ctx.response.status = 201;
 		}
 	);
 
