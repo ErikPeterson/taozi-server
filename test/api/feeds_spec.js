@@ -30,9 +30,37 @@ const setUpFeed = async (post_count, friends) => {
     return [author, user, {Authorization: `Bearer ${auth.get('token')}`}, posts];
 };
 
+const setUpOwnFeed = async (post_count) => {
+    let author = await User.create({email: 'a@b.com', name: 'a', password: '123456'});
+    let auth = await Auth.createByCredentials({email: 'a@b.com', password: '123456'});
+    
+
+    let posts = [];
+    let id = author.get('_id').toString();
+    for(let i = 0; i < post_count; i++){
+        let post = await Post.create({user_id: id, body: [{type: 'text', content: ''}]});
+        posts.push(post);
+    }
+
+    return [author, {Authorization: `Bearer ${auth.get('token')}`}, posts];
+
+}
+
 describe('/feeds', () => {
     before(async () => { await DB.clean() }); 
     afterEach(async () => { await DB.clean() });
+
+    describe('AUTHENTICATED GET /feeds/me', () => {
+        it('returns the most recent page of posts from your feed', async () => {
+            let [author, auth_header, posts] = await setUpOwnFeed(6);
+            let resp = await API.get(`/feeds/me`,
+                null, auth_header);
+            expect(resp.statusCode).to.be(200);
+            expect(resp.body.feed.posts.map( p => p._id).indexOf(posts[0].get('_id').toString())).to.be(-1); 
+            expect(resp.body.feed.meta.next_page).to.be(2);
+            expect(resp.body.feed.meta.prev_page).to.be(null);
+        });
+    });
 
     describe('AUTHENTICATED GET /feeds/:name', () => {
         describe('with an authenticated user', () => {

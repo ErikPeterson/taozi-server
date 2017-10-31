@@ -16,7 +16,41 @@ const authenticateUser = require('../lib/authenticate_user');
 
 const authorizeUserByUserName = require('../lib/authorize_user_by_user_name');
 
+const loadFeed = async (ctx, next) => {
+    let page = +ctx.query.page || 1;
+    let query = {user_id: ctx.author.get('_id').toString()};
+    
+    if(ctx.query.after){
+        let date = new Date(ctx.query.after);
+        query.created_at = { $gte: date };
+    }
+
+    let posts = await Post.where(query, {limit: 5, page: page, sort: ['_id', -1]});
+    if(posts.length === 0 && page !== 1) throw new RecordNotFound('Post', {user_id: ctx.author.get('_id'), page: page});
+    let meta = { page: page };
+    meta.next_page = posts.next_page ? page + 1 : null;
+    meta.prev_page = page === 1 ? null : page - 1;
+    meta.after = ctx.query.after || null;
+    
+    ctx.status = 200;
+    ctx.body = {feed: { meta: meta, posts: posts.map( p => p.render() ) }};
+    
+    if(ctx.query.include === 'user'){
+        ctx.body.feed.user = ctx.author.render('external');
+    }
+};
+
 module.exports = (router, logger) => {
+    feeds.get('user_own_feed', '/me', 
+        authenticateUser,
+        async (ctx, next) => {
+            let author = await User.find(ctx.current_user_id);
+            ctx.author = author;
+            await next();
+        },
+        loadFeed
+    );
+    
     feeds.get('user_feed', '/:user_name', 
         authenticateUser,
         async (ctx, next) => {
@@ -28,31 +62,7 @@ module.exports = (router, logger) => {
             await next();
         },
         bodyParser,
-        async (ctx, next) => {
-            let page = +ctx.query.page || 1;
-            let query = {user_id: ctx.author.get('_id').toString()};
-            
-            if(ctx.query.after){
-                let date = new Date(ctx.query.after);
-                query.created_at = { $gte: date };
-            }
-
-            let posts = await Post.where(query, {limit: 5, page: page, sort: ['_id', -1]});
-            if(posts.length === 0 && page !== 1) throw new RecordNotFound('Post', {user_id: ctx.author.get('_id'), page: page});
-            let meta = { page: page };
-            meta.next_page = posts.next_page ? page + 1 : null;
-            meta.prev_page = page === 1 ? null : page - 1;
-            meta.after = ctx.query.after || null;
-            
-            ctx.status = 200;
-            ctx.body = {feed: { meta: meta, posts: posts.map( p => p.render() ) }};
-            await next();    
-        },
-        async (ctx, next) => {
-            if(ctx.query.include === 'user'){
-                ctx.body.feed.user = ctx.author.render('external');
-            }
-        }
+        loadFeed
     );
     router.use('/feeds', feeds.routes(), feeds.allowedMethods());
 };
