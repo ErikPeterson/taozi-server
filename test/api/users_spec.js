@@ -180,4 +180,102 @@ describe('/users', () => {
 			});
 		});
 	});
+
+
+	describe('AUTHENTICATED POST /users/:name/friend_requests', () => {
+		describe('when the users are not friends yet', () => {
+
+			describe('with an existing friend request from the requester to the indicated user', () => {
+				it('responds with a 420', async () => {
+					let user = await User.create({email: 'a@b.com', name: 'a', password: '123456'});
+					let requested = await User.create({email: 'b@a.com', name: 'b', password: '123456'});
+					await requested.requestFriendship(user.get('_id'));
+					let auth = await Auth.createByCredentials({email: 'a@b.com', password: '123456'});
+					let resp = await API.post(`/users/${requested.get('name')}/friend_requests`, {}, { Authorization: `Bearer ${auth.get('token')}`});
+					expect(resp.statusCode).to.be(420);
+				});
+			});
+
+			it('adds a friend_request to the indicated user and a requested_friend to the requesting user', async () => {
+					let user = await User.create({email: 'a@b.com', name: 'a', password: '123456'});
+					let requested = await User.create({email: 'b@a.com', name: 'b', password: '123456'});
+					let auth = await Auth.createByCredentials({email: 'a@b.com', password: '123456'});
+					let resp = await API.post(`/users/${requested.get('name')}/friend_requests`, {}, { Authorization: `Bearer ${auth.get('token')}`});
+					expect(resp.statusCode).to.be(201);
+					await user.reload();
+					expect(user.get('requested_friends').length).to.be(1);
+					await requested.reload();
+					expect(requested.get('friend_requests').length).to.be(1);
+			});
+		});
+
+		describe('when the users are already friends', () => {
+			it('responds with a 420', async () => {
+				let user = await User.create({email: 'a@b.com', name: 'a', password: '123456'});
+				let requested = await User.create({email: 'b@a.com', name: 'b', password: '123456'});
+				await requested.requestFriendship(user.get('_id'))
+				await requested.befriend(user.get('_id'));
+				let auth = await Auth.createByCredentials({email: 'a@b.com', password: '123456'});
+				let resp = await API.post(`/users/${requested.get('name')}/friend_requests`, {}, { Authorization: `Bearer ${auth.get('token')}`});
+				expect(resp.statusCode).to.be(420);
+
+			});
+		});
+	});
+
+	describe('AUTHENTICATED POST /users/me/friend_requests/:user_id/accept', () => {
+		describe('with an existing friend request from the indicated user', () => {
+			it('adds the user as a friend, and removes the friend request/requested friend', async () => {
+					let user = await User.create({email: 'a@b.com', name: 'a', password: '123456'});
+					let requested = await User.create({email: 'b@a.com', name: 'b', password: '123456'});
+					await requested.requestFriendship(user.get('_id'));
+					let auth = await Auth.createByCredentials({email: 'b@a.com', password: '123456'});
+					let resp = await API.post(`/users/me/friend_requests/${user.get('_id')}/accept`, {}, { Authorization: `Bearer ${auth.get('token')}`});
+					expect(resp.statusCode).to.be(201);
+					await user.reload();
+					expect(user.get('friends').includes(requested.get('_id').toString())).to.be.ok();
+					expect(user.get('requested_friends')).to.be.empty();
+					await requested.reload();
+					expect(requested.get('friends').includes(user.get('_id').toString())).to.be.ok();
+					expect(requested.get('friend_requests')).to.be.empty();
+			});
+		});
+
+		describe('with no existing friend request from the indicated user', () => {
+			it('responds with a 400', async () => {
+				let user = await User.create({email: 'a@b.com', name: 'a', password: '123456'});
+				let requested = await User.create({email: 'b@a.com', name: 'b', password: '123456'});
+				let auth = await Auth.createByCredentials({email: 'b@a.com', password: '123456'});
+				let resp = await API.post(`/users/me/friend_requests/${user.get('_id')}/accept`, {}, { Authorization: `Bearer ${auth.get('token')}`});
+				expect(resp.statusCode).to.be(400);
+			});
+		});
+	});
+
+	describe('AUTHENTICATED POST /users/me/friend_requests/:user_id/ignore', () => {
+		describe('with an existing friend request from the indicated user', () => {
+			it('adds the user as a friend, and removes the friend request/requested friend', async () => {
+					let user = await User.create({email: 'a@b.com', name: 'a', password: '123456'});
+					let requested = await User.create({email: 'b@a.com', name: 'b', password: '123456'});
+					await requested.requestFriendship(user.get('_id'));
+					let auth = await Auth.createByCredentials({email: 'b@a.com', password: '123456'});
+					let resp = await API.post(`/users/me/friend_requests/${user.get('_id')}/ignore`, {}, { Authorization: `Bearer ${auth.get('token')}`});
+					expect(resp.statusCode).to.be(201);
+					await user.reload();
+					expect(user.get('requested_friends')).to.be.empty();
+					await requested.reload();
+					expect(requested.get('friend_requests')).to.be.empty();
+			});
+		});
+
+		describe('with no existing friend request from the indicated user', () => {
+			it('responds with a 400', async () => {
+				let user = await User.create({email: 'a@b.com', name: 'a', password: '123456'});
+				let requested = await User.create({email: 'b@a.com', name: 'b', password: '123456'});
+				let auth = await Auth.createByCredentials({email: 'b@a.com', password: '123456'});
+				let resp = await API.post(`/users/me/friend_requests/${user.get('_id')}/ignore`, {}, { Authorization: `Bearer ${auth.get('token')}`});
+				expect(resp.statusCode).to.be(400);
+			});
+		});
+	});
 });

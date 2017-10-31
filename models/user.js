@@ -41,6 +41,7 @@ const RENDERABLE_ATTRIBUTES = [
 ];
 
 const FriendRequest = require('./friend_request');
+const RecordInvalid = require('./errors/record_invalid');
 
 class User extends BaseModel {
     static get column_name(){ return 'users'; }
@@ -104,14 +105,112 @@ class User extends BaseModel {
         return comparePassword(password, this.get('password_hash'));
     }
 
-    async visibleTo(user_id){
-        if(this.get('post_visibility') === 0){
-            let friends = await FriendRequest.areFriends(this.get('_id'), user_id);
-            return friends;
-        } else {
-            let fof = await FriendRequest.friendsOfFriends(this.get('_id'), user_id);
-            return fof;
+    async befriend(user_id){
+        user_id = user_id.toString();
+        let other = await User.find(user_id);
+
+        await this.reload();
+
+        let fr = this.get('friend_requests');
+
+        if(!fr || !fr.map(r => r.user_id).includes(user_id)) {
+            this.errors.add('user_id', 'no open friend request with this user');
+            throw new RecordInvalid(this.this, this.errors);
         }
+
+        other.set('friends', (other.get('friends') || []).concat(this.get('_id').toString()));
+        this.set('friends', (this.get('friends') || []).concat(user_id));
+        let new_fr = fr.reduce((a, r) => {
+            if(r.user_id !== user_id) a.push(r);
+            return a;
+        }, [])
+        
+        this.set('friend_requests', new_fr);
+        let rf = other.get('rf');
+        let new_rf = fr.reduce((a, r) => {
+            if(r.user_id !== user_id) a.push(r);
+            return a;
+        }, []);
+        other.set('requested_friends', new_rf);
+
+        await this.save();
+        await other.save();
+        return true;
+    }
+
+    async ignore(user_id){
+        user_id = user_id.toString();
+        let other = await User.find(user_id);
+
+        await this.reload();
+
+        let fr = this.get('friend_requests');
+
+        if(!fr || !fr.map(r => r.user_id).includes(user_id)) {
+            this.errors.add('user_id', 'no open friend request with this user');
+            throw new RecordInvalid(this.this, this.errors);
+        }
+
+        let new_fr = fr.reduce((a, r) => {
+            if(r.user_id !== user_id) a.push(r);
+            return a;
+        }, [])
+        
+        this.set('friend_requests', new_fr);
+        let rf = other.get('rf');
+        let new_rf = fr.reduce((a, r) => {
+            if(r.user_id !== user_id) a.push(r);
+            return a;
+        }, []);
+        other.set('requested_friends', new_rf);
+
+        await this.save();
+        await other.save();
+        return true;
+    }
+
+    async requestFriendship(user_id){
+        user_id = user_id.toString();
+        let other = await User.find(user_id);
+
+        if((this.get('friends') || []).includes(user_id)){
+            this.errors.add('user_id', 'is already friends with this user');
+            throw new RecordInvalid(this, this.errors);
+        }
+
+        if(this.friendRequested(user_id)){
+            this.errors.add('user_id', 'already has an open friend request with this user');
+            throw new RecordInvalid(this, this.errors);
+        }
+
+        let date = new Date();
+
+        this.set('friend_requests', (this.get('friend_requests') || []).concat({ user_id: user_id, date: date }));
+        other.set('requested_friends', (other.get('requested_friends') || []).concat({ user_id: this.get('_id').toString(), date: date }));
+        await this.save();
+        await other.save();
+        return true;
+    }
+
+    friendRequested(user_id){
+        let fr = this.get('friend_requests') || [];
+        let rf = this.get('requested_friends') || [];
+        return rf.concat(fr).map(r => r.user_id).includes(user_id.toString());
+    }
+
+    async visibleTo(user_id){
+        user_id = user_id.toString();
+        let friends = this.get('friends');
+        
+        if(friends){
+            if(friends.includes(user_id)) return true;
+            if(this.get('post_visibility') === 0 ) return false;
+
+            let fof = await User.exists({friends: {$all: [this.get('_id').toString(), user_id]}});
+            return fof;
+        } 
+
+        return false;
     }
 
     static get schema(){
