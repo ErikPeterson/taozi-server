@@ -26,7 +26,7 @@ const RENDERABLE_ATTRIBUTES = [
     'display_name',
     'post_visibility',
     'old_post_visibility',
-    'blocked',
+    'blocks',
     'friends',
     'friend_requests',
     'requested_friends'
@@ -160,6 +160,29 @@ class User extends BaseModel {
         return true;
     }
 
+    async blockUser(user_id){
+        user_id = user_id.toString();
+        let blocks = this.get('blocks') || [];
+        if(blocks.includes(user_id)) {
+            this.errors.add('blocks', 'cannot block user that is already blocked');
+            throw new RecordInvalid(this, this.errors);
+        }
+        this.set('blocks', blocks.concat(user_id));
+        await this.save();
+    }
+
+    async unblockUser(user_id){
+        user_id = user_id.toString();
+        let blocks = this.get('blocks') || [];
+        if(!blocks.includes(user_id)) {
+            this.errors.add('blcks', 'cannot unblock user that is not blocked');
+            throw new RecordInvalid(this, this.errors);
+        }
+        blocks.splice(blocks.indexOf(user_id), 1);
+        this.set('blocks', blocks);
+        await this.save();
+    }
+
     async requestFriendship(user_id){
         user_id = user_id.toString();
         let other = await User.find(user_id);
@@ -191,6 +214,7 @@ class User extends BaseModel {
 
     async visibleTo(user_id){
         user_id = user_id.toString();
+        if((this.get('blocks') || []).includes(user_id)) return false;
         let friends = this.get('friends');
         
         if(friends){
@@ -214,7 +238,7 @@ class User extends BaseModel {
             display_name: '',
             old_post_visibility: 0,
             post_visibility: 0,
-            blocked: [],
+            blocks: [],
             friends: [],
             friend_requests: [],
             requested_friends: []

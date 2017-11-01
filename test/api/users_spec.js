@@ -25,7 +25,7 @@ describe('/users', () => {
 		bio: 'What up it is a bio', 
 		display_name: 'Wow!', 
 		avatar_url: 'https://some.amazon.url',
-		blocked: ['1', '2','3'],
+		blocks: ['1', '2','3'],
 		friends: ['123', '321'],
 		friend_requests: [{ user_id: '1234', date: new Date().toString() }],
 		requested_friends: [{ user_id: '3234', date: new Date().toString() }]
@@ -181,6 +181,52 @@ describe('/users', () => {
 		});
 	});
 
+	describe('AUTHENTICATED POST /users/:name/unblock', () => {
+		it('removes the user from the current user\'s block list', async () => {
+			let user = await User.create({email: 'a@b.com', name: 'a', password: '123456'});
+			let blocked = await User.create({email: 'b@a.com', name: 'b', password: '123456'});
+			await user.blockUser(blocked.get('_id'));
+			let auth = { Authorization: `Bearer ${(await Auth.createByCredentials({email: 'a@b.com', password: '123456'})).get('token')}`};
+
+			let resp = await API.post('users/b/unblock', {}, auth);
+
+			expect(resp.statusCode).to.be(200);
+			await user.reload();
+			expect(user.get('blocks').length).to.be(0);
+		});
+
+		it('returns a 404 if the user was not found', async () => {
+			let user = await User.create({email: 'a@b.com', name: 'a', password: '123456'});
+			let auth = { Authorization: `Bearer ${(await Auth.createByCredentials({email: 'a@b.com', password: '123456'})).get('token')}`};
+			let resp = await API.post('users/b/unblock', {}, auth);
+			
+			expect(resp.statusCode).to.be(404);			
+		});
+	});
+
+	describe('AUTHENTICATED POST /users/:name/block', () => {
+		it('adds the user to current user\'s block list', async () => {
+			let user = await User.create({email: 'a@b.com', name: 'a', password: '123456'});
+			let blocked = await User.create({email: 'b@a.com', name: 'b', password: '123456'});
+			let auth = { Authorization: `Bearer ${(await Auth.createByCredentials({email: 'a@b.com', password: '123456'})).get('token')}`};
+
+			let resp = await API.post('/users/b/block', {}, auth);
+
+			expect(resp.statusCode).to.be(201);
+			await user.reload();
+			expect(user.get('blocks').includes(blocked.get('_id').toString())).to.be.ok();
+		});
+
+		describe('if the user does not exist', () => {
+			it('raises a 404', async () => {
+				let user = await User.create({email: 'a@b.com', name: 'a', password: '123456'});
+				let auth = { Authorization: `Bearer ${(await Auth.createByCredentials({email: 'a@b.com', password: '123456'})).get('token')}`};
+
+				let resp = await API.post('/users/b/block', {}, auth);
+				expect(resp.statusCode).to.be(404);
+			});
+		});
+	});
 
 	describe('AUTHENTICATED POST /users/:name/friend_requests', () => {
 		describe('when the users are not friends yet', () => {
