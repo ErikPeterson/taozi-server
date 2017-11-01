@@ -2,7 +2,6 @@
 
 const _ = require('lodash');
 const Post = require('../models/post');
-const Comment = require('../models/comment');
 const User = require('../models/user');
 const Forbidden = require('../lib/errors/forbidden');
 const Router = require('koa-router');
@@ -44,24 +43,6 @@ module.exports = (router, logger) => {
 		}
 	);
 
-	posts.get('post_comments', '/:id/comments', 
-		authenticateUser,
-		async (ctx, next) => {
-			let post = await Post.find(ctx.params.id);
-			let post_user = await User.find(post.get('user_id'));
-			let visible = await post_user.visibleTo(ctx.current_user_id);
-
-			if(!visible) throw new Forbidden('you do not have permission to create this resource');
-
-			let comments = await Comment.where({post_id: post.get('_id').toString()});
-
-			ctx.status = 200;
-			ctx.body = {comments: comments.map( c => {return { comment: c.render() }})};
-
-			await next();
-		}
-	);
-
 	posts.post('post_comments', '/:id/comments',
 		authenticateUser,
 		bodyParser,
@@ -73,11 +54,12 @@ module.exports = (router, logger) => {
 			
 			if(!visible) throw new Forbidden('you do not have permission to create this resource');
 			
-			let comment_params = _.merge({user_id: ctx.current_user_id, post_id: post.get('_id').toString()}, ctx.request.params.require('comment').permit('text').value());
-			let comment = await Comment.create(comment_params);
-			post.incrementCommentCount();
+			let comment_params = _.merge({user_id: ctx.current_user_id}, ctx.request.params.require('comment').permit('text').value());
+
+			await post.addComment(comment_params);
+			
 			ctx.status = 201;
-			ctx.body = {comment: comment.render() };
+			ctx.body = { comment: comment_params };
 
 			await next();
 		}

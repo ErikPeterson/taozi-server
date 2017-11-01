@@ -69,18 +69,21 @@ describe('Post', () => {
 		});
 	});
 
-	describe('async #incrementCommentCount', () => {
-		it('increments the like_count property of the post and saves', async () => {
+	describe('async #addComment(comment_params)', () => {
+		it('adds a comment to the post', async () => {
 			await post.save();
-			await post.incrementCommentCount();
-
-			expect(post.get('comment_count')).to.be(1);
-			expect(post.changed).to.not.be.ok();
+			await post.addComment({user_id: '1', text: 'Hey'});
+			expect(post.get('comments').length).to.be(1);
 		});
 
-		it('does not save if the post is not yet persisted', async () => {
-			await post.incrementCommentCount();
-			expect(post.new_record).to.be.ok();
+		it('throws an error if the comment is invalid', async () => {
+			await post.save();
+			try{
+				await post.addComment({user_id: '1', butt: 'hey'});
+				expect().fail();
+			} catch(e) {
+				expect(e.constructor.name).to.be('RecordInvalid');
+			}
 		});
 	});
 
