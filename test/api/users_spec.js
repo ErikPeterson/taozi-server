@@ -25,7 +25,7 @@ describe('/users', () => {
 		bio: 'What up it is a bio', 
 		display_name: 'Wow!', 
 		avatar_url: 'https://some.amazon.url',
-		blocked: ['1', '2','3'],
+		blocks: ['1', '2','3'],
 		friends: ['123', '321'],
 		friend_requests: [{ user_id: '1234', date: new Date().toString() }],
 		requested_friends: [{ user_id: '3234', date: new Date().toString() }]
