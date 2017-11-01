@@ -25,10 +25,10 @@ Taozi (套子) is a social network based off of a semi-defunct app named after a
 	- Comment on posts
 	- like posts
 	- Feeds
+	- block users
 
 ## TODO
 
-- Implement blocking
 - Implement 'greetings'
 - Create web interface
 - Create iOS and Android apps
