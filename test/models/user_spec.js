@@ -470,4 +470,27 @@ describe('User', () => {
 			}
 		});
 	});
+
+	describe('async #unblockUser(user_id)', () => {
+		it("removes the specified user id from blocks", async () => {
+			let user = await User.create({name: 'a', email: 'a@b.com', password: '123456'});
+			await user.blockUser('12345');
+			await user.unblockUser('12345');
+
+			expect(user.get('blocks').includes('12345')).to.not.be.ok();
+		});
+
+		it("throws an error if the user is not blocked", async () => {
+			let user = await User.create({name: 'a', email: 'a@b.com', password: '123456'});
+
+
+			try{
+				await user.unblockUser('12345');
+				expect().fail();
+			} catch(e){
+				expect(e.constructor.name).to.be('RecordInvalid');
+			}
+		});
+
+	});
 });

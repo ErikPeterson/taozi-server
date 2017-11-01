@@ -171,6 +171,18 @@ class User extends BaseModel {
         await this.save();
     }
 
+    async unblockUser(user_id){
+        user_id = user_id.toString();
+        let blocks = this.get('blocks') || [];
+        if(!blocks.includes(user_id)) {
+            this.errors.add('blcks', 'cannot unblock user that is not blocked');
+            throw new RecordInvalid(this, this.errors);
+        }
+        blocks.splice(blocks.indexOf(user_id), 1);
+        this.set('blocks', blocks);
+        await this.save();
+    }
+
     async requestFriendship(user_id){
         user_id = user_id.toString();
         let other = await User.find(user_id);
