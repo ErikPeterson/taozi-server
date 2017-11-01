@@ -5,6 +5,7 @@ const Auth = require('../models/auth');
 const Unauthorized = require('../lib/errors/unauthorized');
 const Forbidden = require('../lib/errors/forbidden');
 const BadRequest = require('../lib/errors/bad_request');
+const RecordNotFound = require('../models/errors/record_not_found');
 const IncreaseYourChill = require('../lib/errors/increase_your_chill');
 const Router = require('koa-router');
 const users = new Router();
@@ -108,5 +109,18 @@ module.exports = (router, logger) => {
 		}
 	);
 
+	users.post('user_block', '/:name/block', 
+		authenticateUser,
+		async (ctx, next) => {
+			let user = (await User.where({name: ctx.params.name}, {limit: 1}))[0];
+			if(!user) throw new RecordNotFound('User', {name: ctx.params.name});
+			let blocker = await User.find(ctx.current_user_id);
+
+			await blocker.blockUser(user.get('_id'));
+
+			ctx.response.body = {}
+			ctx.response.status = 201;			
+		}
+	);
     router.use('/users', users.routes(), users.allowedMethods());
 };
