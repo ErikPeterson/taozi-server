@@ -122,5 +122,19 @@ module.exports = (router, logger) => {
 			ctx.response.status = 201;			
 		}
 	);
+
+	users.post('user_unblock', '/:name/unblock', 
+		authenticateUser,
+		async (ctx, next) => {
+			let user = (await User.where({name: ctx.params.name}, {limit: 1}))[0];
+			if(!user) throw new RecordNotFound('User', {name: ctx.params.name});
+			let unblocker = await User.find(ctx.current_user_id);
+
+			await unblocker.unblockUser(user.get('_id'));
+
+			ctx.response.body = {}
+			ctx.response.status = 200;			
+		}
+	);
     router.use('/users', users.routes(), users.allowedMethods());
 };
