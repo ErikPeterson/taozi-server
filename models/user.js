@@ -241,7 +241,8 @@ class User extends BaseModel {
             blocks: [],
             friends: [],
             friend_requests: [],
-            requested_friends: []
+            requested_friends: [],
+            nods: []
         };
     }
 }

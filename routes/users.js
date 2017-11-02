@@ -134,5 +134,18 @@ module.exports = (router, logger) => {
 			ctx.response.status = 200;			
 		}
 	);
+
+	users.post('user_nod', '/:name/nods', 
+		authenticateUser,
+		async (ctx, next) => {
+			let user = await User.findBy({name: ctx.params.name});
+			let visible = await user.visibleTo(ctx.current_user_id);
+			if(!visible) throw new Forbidden('you do not have permission to nod at this user');
+
+			await user.update({nods: (user.get('nods') || []).concat(ctx.current_user_id) });
+
+			ctx.response.body = {};
+			ctx.response.status = 201;
+		})
     router.use('/users', users.routes(), users.allowedMethods());
 };
