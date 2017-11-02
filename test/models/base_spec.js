@@ -228,6 +228,38 @@ describe('ModelBase', () => {
 			});
 		});
 
+		describe('.findBy(query)', () => {
+			describe('when a record with those properties exists', () => {
+				it('returns the instance', async () => {
+					let inst = await FakeModel.create({name: 'hey'});
+					let found = await FakeModel.findBy({name: 'hey'});
+
+					expect(inst.render()).to.eql(found.render());
+				});
+
+				it('returns only one record if others matching the query exist', async () => {
+					let inst = await FakeModel.create({name: 'hey'});
+					let inst2 = await FakeModel.create({name: 'hey'});
+					
+					let found = await FakeModel.findBy({name: 'hey'});
+
+					expect(found.render()).to.eql(inst.render());
+				});
+			});
+
+			describe('when no record with those properties exists', () => {
+				it('throws an error', async () => {
+					try{
+						await FakeModel.findBy({name: 'hey'});
+						expect().fail();
+					} catch(e) {
+						expect(e.constructor.name).to.be('RecordNotFound');
+					}
+				});
+			});
+
+		});
+
 		describe('.where(query, options={})', () => {
 			it('returns all matching data', async () => {
 				let inst = await FakeModel.create({name: 'hey'});
