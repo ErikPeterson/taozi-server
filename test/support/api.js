@@ -1,6 +1,6 @@
 'use strict';
 
-const app = require('../../index');
+const app = require('../../app');
 const _ = require('lodash');
 const request = require('request-promise-native');
 
