@@ -306,4 +306,33 @@ describe('/users', () => {
 			});
 		});
 	});
+
+
+	describe('AUTHENTICATED POST /users/:name/nods', () => {
+		describe('when the user is visible to the authenticated user', () => {
+			it('adds a greeting to the user', async () => {
+				let user = await User.create({email: 'a@b.com', name: 'b', password: '123456'});
+				let nodder = await User.create({email: 'b@a.com', name: 'a', password: '123456'});
+				let auth = await Auth.createByCredentials({email: 'b@a.com', password: '123456'});
+
+				await user.update({friends: [nodder.get('_id').toString()]});
+
+				let resp = await API.post('/users/b/nods', {}, {Authorization: `Bearer ${auth.get('token')}`});
+				expect(resp.statusCode).to.be(201);
+				await user.reload();
+				expect(user.get('nods')[0]).to.eql(nodder.get('_id').toString());
+			});
+		});
+
+		describe('when the user is not visible to the authenticated user', () => {
+			it('responds with a 403', async () => {
+				let user = await User.create({email: 'a@b.com', name: 'b', password: '123456'});
+				let nodder = await User.create({email: 'b@a.com', name: 'a', password: '123456'});
+				let auth = await Auth.createByCredentials({email: 'b@a.com', password: '123456'});
+				let resp = await API.post('/users/b/nods', {}, {Authorization: `Bearer ${auth.get('token')}`});
+				
+				expect(resp.statusCode).to.be(403);
+			});
+		})
+	});
 });
