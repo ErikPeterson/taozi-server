@@ -4,6 +4,7 @@
   "description": "Backend for Taozi",
   "main": "app.js",
   "scripts": {
+    "server": "node ./boot.js",
     "test": "db-migrate up -e test && NODE_ENV='test' nyc --reporter=html mocha --exit 'test/**/*_spec.js'",
     "testci": "db-migrate up -e test && NODE_ENV='test' nyc mocha --exit 'test/**/*_spec.js' && nyc report --reporter=text-lcov | coveralls"
   },
