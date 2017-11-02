@@ -10,6 +10,7 @@ const IncreaseYourChill = require('../lib/errors/increase_your_chill');
 const Router = require('koa-router');
 const users = new Router();
 
+const hashPhoneNumber = require('../lib/hash_phone_number');
 const bodyParser = require('koa-body')({form: false, text: false, url_encoded: false});
 const permittedParams = require('../lib/permitted_params');
 const authenticateUser = require('../lib/authenticate_user');
@@ -30,6 +31,19 @@ module.exports = (router, logger) => {
 		    let user = await User.create(userParams);
 		    ctx.response.body = {user: user.render()};
 		    ctx.response.status = 201;
+		}
+	);
+
+	users.get('contacts', '/contacts', 
+		authenticateUser,
+		async (ctx, next) => {
+			let phone_numbers = ctx.query.phone_numbers.split(',');
+			let hashes = phone_numbers.map(n => hashPhoneNumber(n.replace(/[^\d+]/g, '')));
+
+			let users = await User.where({ phone_number_hash: { $in: hashes}, blocks: { $nin: [ctx.current_user_id]}});
+
+			ctx.response.status = 200;
+			ctx.response.body = { users: users.map( u => u.render('external') )};
 		}
 	);
 
