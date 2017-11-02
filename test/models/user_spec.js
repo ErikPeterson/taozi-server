@@ -140,6 +140,25 @@ describe('User', () => {
 			});
 		});
 
+		describe('phone_number', () => {
+			it('is transformed into phone_number_hash and unset after save', async () => {
+				let user = await User.create({email: 'a@b.com', name: 'aname', password: '123456', phone_number: '+14016261140'});
+				expect(user.get('phone_number')).to.not.be.ok();
+				let original_hash = user.get('phone_number_hash');
+				expect(original_hash).to.be.ok();
+				await user.update({phone_number: '4345556666'});
+				expect(user.get('phone_number')).to.not.be.ok();
+				expect(user.get('phone_number_hash')).to.not.eql(original_hash);
+			});
+
+			it('is formatted before being hashed', async () => {
+				let user1 = await User.create({email: 'a@b.com', name: 'a', password: '123456', phone_number: '+1 401 626 1140'});
+				let user2 = await User.create({email: 'b@a.com', name: 'b', password: '123456', phone_number: '+1(401) 626-1140'});
+
+				expect(user1.get('phone_number_hash')).to.be(user2.get('phone_number_hash'));
+			});
+		});
+
 		describe('bio', () => {
 			it('must be 200 characters or fewer', async () => {
 				try{

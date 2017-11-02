@@ -31,6 +31,42 @@ describe('/users', () => {
 		requested_friends: [{ user_id: '3234', date: new Date().toString() }]
 	};
 
+	describe('AUTHENTICATED GET /contacts?phone_numbers', () => {
+		describe('with an authenticated user', () => {
+			it('responds with all users who are not already friends with the authenticated user and do not block them', async () => {
+				let phone_numbers = [];
+				let usernames = ['a','b','c','d','e','f','g'];
+				let user = await User.create({email: 'butt@gut.com', password: '123456', name: 'bbb'});
+				for(let u of usernames){
+					let n = faker.phone.phoneNumber();
+					phone_numbers.push(n);
+					let use = await User.create({email: `${u}@${u}.com`, password: '123456', name: u, phone_number: n});
+					if(u === 'g') await use.update({blocks: [user.get('_id').toString()]}); 
+				}
+
+				let auth = await Auth.createByCredentials({email: 'butt@gut.com', password: '123456'});
+
+				let resp = await API.get('/users/contacts?phone_numbers=' + phone_numbers.join(','), null, { Authorization: `Bearer ${auth.get('token')}`})
+
+				expect(resp.statusCode).to.be(200);
+				expect(resp.body.users.length).to.be(6);
+				expect(resp.body.users.map(u => u.name).sort()).to.eql(usernames.slice(0, 6));
+			});
+
+			describe('with no matching users', () => {
+				it('responds with an empty array', async () => {
+					let user = await User.create({email: 'butt@gut.com', password: '123456', name: 'bbb'});
+					let auth = await Auth.createByCredentials({email: 'butt@gut.com', password: '123456'});
+
+					let resp = await API.get('/users/contacts?phone_numbers=+14016261140', null, { Authorization: `Bearer ${auth.get('token')}`})
+
+					expect(resp.statusCode).to.be(200);
+					expect(resp.body.users.length).to.be(0);
+				});
+			});
+		});
+	});
+
 	describe('AUTHENTICATED GET /me', () => {
 
 		describe('with an authenticated user', () => {
@@ -132,6 +168,15 @@ describe('/users', () => {
 			
 			expect(resp.statusCode).to.be(200);
 			expect(resp.body.user.avatar_url).to.be(avatar_url);
+		});
+
+		it('can set the user\'s phone number', async () => {
+			let phone_number = '+14016261140';
+			let resp = await API.post('/users/me', { user: { phone_number: '+16109372347'}}, headers);
+
+			expect(resp.statusCode).to.be(200);
+			await user.reload();
+			expect(user.get('phone_number_hash')).to.be.ok();
 		});
 
 		it('can update the user\'s name', async () => {
