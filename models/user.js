@@ -5,11 +5,13 @@ const NAME_REGEX = /[^0-9aA-zZ_]/
 const BaseModel = require('./base');
 const hashPassword = require('../lib/hash_password');
 const comparePassword = require('../lib/compare_password');
+const hashPhoneNumber = require('../lib/hash_phone_number');
 
 const BEFORE_VALIDATE = [
     '_validate_email',
     '_validate_name', 
     '_transform_password', 
+    '_transform_phone_number',
     '_validate_password_hash', 
     '_validate_bio', 
     '_validate_display_name', 
@@ -89,6 +91,15 @@ class User extends BaseModel {
                 this.set('password_hash', hash);
         }
 
+    }
+
+    _transform_phone_number(){
+        let num = this.get('phone_number');
+        if(!num) return;
+        num = num.replace(/[^\d+]/g, '');
+        let hash = hashPhoneNumber(num);
+        this.set('phone_number_hash', hash);
+        this._unset('phone_number');
     }
 
     async authenticate(password=''){
@@ -232,6 +243,7 @@ class User extends BaseModel {
         return {
             name: '',
             email: '',
+            phone_number_hash: '',
             password_hash: '',
             avatar_url: '',
             bio: '',
