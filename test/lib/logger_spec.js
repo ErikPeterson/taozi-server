@@ -34,7 +34,7 @@ describe('logger(opts)', () => {
 		expect(logger.transport).to.be(transport);
 	});
 
-	describe('.middleware(ctx, next)', () => {
+	describe('async .middleware(ctx, next)', () => {
 		it('records request information in the log', async () => {
 			let ctx = {
 				request: {

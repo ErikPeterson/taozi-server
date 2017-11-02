@@ -16,7 +16,7 @@ describe('/posts', () => {
 		await DB.clean();
 	});
 
-	describe('AUTHENTICATED POST /posts/:id/comments', () => {
+	describe('AUTHENTICATED POST /posts/:id/comments {comment: {text}}', () => {
 		let post;
 		let creator;
 		let commenter;

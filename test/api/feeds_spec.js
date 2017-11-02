@@ -64,15 +64,6 @@ describe('/feeds', () => {
 
     describe('AUTHENTICATED GET /feeds/:name', () => {
         describe('with an authenticated user', () => {
-            describe('when a user with that name does not exist', () => {
-                it('responds with a 404', async () => {
-                    let [author, user, auth_header, posts] = await setUpFeed(6, true);
-                    let resp = await API.get(`/feeds/rando`,
-                        null, auth_header);
-                    expect(resp.statusCode).to.be(404);
-                });
-            });
-
             describe('when the authenticated user is friends with the feed author', () => {
                 it('returns the most recent page of posts from the feed', async () => {
                     let [author, user, auth_header, posts] = await setUpFeed(6, true);

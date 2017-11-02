@@ -46,7 +46,7 @@ module.exports = (router, logger) => {
 	users.get('user', '/:name', 
 		authenticateUser,
 		async (ctx, next) => {
-			let user = (await User.where({name: ctx.params.name}, {limit: 1}))[0];
+			let user = await User.findBy({name: ctx.params.name});;
 
 			ctx.response.body = {user: user.render('external')};
 			ctx.response.status = 200;
@@ -98,7 +98,7 @@ module.exports = (router, logger) => {
 	users.post('user_friend_requests', '/:name/friend_requests',
 		authenticateUser,
 		async (ctx, next) => {
-			let user = (await User.where({name: ctx.params.name}, {limit: 1}))[0];
+			let user = await User.findBy({name: ctx.params.name});
 			if((user.get('friends') || []).includes(ctx.current_user_id)) throw new IncreaseYourChill('you are already friends');
 			if(user.friendRequested(ctx.current_user_id)) throw new IncreaseYourChill('you cannot create a new friend request with this user');
 
@@ -112,8 +112,7 @@ module.exports = (router, logger) => {
 	users.post('user_block', '/:name/block', 
 		authenticateUser,
 		async (ctx, next) => {
-			let user = (await User.where({name: ctx.params.name}, {limit: 1}))[0];
-			if(!user) throw new RecordNotFound('User', {name: ctx.params.name});
+			let user = await User.findBy({name: ctx.params.name});;
 			let blocker = await User.find(ctx.current_user_id);
 
 			await blocker.blockUser(user.get('_id'));
@@ -126,8 +125,7 @@ module.exports = (router, logger) => {
 	users.post('user_unblock', '/:name/unblock', 
 		authenticateUser,
 		async (ctx, next) => {
-			let user = (await User.where({name: ctx.params.name}, {limit: 1}))[0];
-			if(!user) throw new RecordNotFound('User', {name: ctx.params.name});
+			let user = await User.findBy({name: ctx.params.name});;
 			let unblocker = await User.find(ctx.current_user_id);
 
 			await unblocker.unblockUser(user.get('_id'));

@@ -66,7 +66,7 @@ describe('/posts', () => {
 		});
 	});
 
-	describe('AUTHENTICATED POST /posts/:id/likes', () => {
+	describe('AUTHENTICATED POST /posts/:id/likes {}', () => {
 		let liker;
 		let post;
 		let path;

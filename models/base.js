@@ -237,6 +237,14 @@ class ModelBase {
                 })
     }
 
+    static async findBy(query){
+        return DB.where(this.column_name, query, {limit: 1})
+                .then((records) => {
+                    if(!records[0]) throw new RecordNotFound(this.name, query);
+                    return new this(records[0]);
+                });
+    }
+
     static async where(query, options={}){
         return DB.where(this.column_name, query, options)
                 .then((results) => {

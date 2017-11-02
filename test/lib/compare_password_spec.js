@@ -4,7 +4,7 @@ const expect = require('expect.js');
 const comparePassword = require('../../lib/compare_password');
 const hashPassword = require('../../lib/hash_password');
 
-describe('comparePassword(password, password_hash)', () => {
+describe('async comparePassword(password, password_hash)', () => {
 	it('returns true if the password and hash match', async () => {
 		let password = '12345tvwp';
 		let hash = await hashPassword(password);

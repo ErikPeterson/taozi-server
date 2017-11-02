@@ -79,7 +79,7 @@ describe('Post', () => {
 		it('throws an error if the comment is invalid', async () => {
 			await post.save();
 			try{
-				await post.addComment({user_id: '1', butt: 'hey'});
+				await post.addComment({users_id: '1', butt: 'hey', whatever: 'dickhead'});
 				expect().fail();
 			} catch(e) {
 				expect(e.constructor.name).to.be('RecordInvalid');

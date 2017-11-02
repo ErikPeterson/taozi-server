@@ -6,7 +6,7 @@ const Auth = require('../../models/auth');
 const User = require('../../models/user');
 const DB = require('../support/db_cleaner');
 
-describe('authenticateUser(ctx, next)', () => {
+describe('async authenticateUser(ctx, next)', () => {
 	describe('with a valid auth token in ctx.headers', () => {
 		let user;
 		let auth;

@@ -54,8 +54,7 @@ module.exports = (router, logger) => {
     feeds.get('user_feed', '/:user_name', 
         authenticateUser,
         async (ctx, next) => {
-            let author = (await User.where({name: ctx.params.user_name}))[0];
-            if(!author) throw new RecordNotFound('User', {name: ctx.params.user_name});
+            let author = await User.findBy({name: ctx.params.user_name});
             let visible = await author.visibleTo(ctx.current_user_id);
             if(!visible) throw new Forbidden('you do not have permission to access this resource');
             ctx.author = author;
