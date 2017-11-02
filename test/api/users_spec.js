@@ -134,6 +134,15 @@ describe('/users', () => {
 			expect(resp.body.user.avatar_url).to.be(avatar_url);
 		});
 
+		it('can set the user\'s phone number', async () => {
+			let phone_number = '+14016261140';
+			let resp = await API.post('/users/me', { user: { phone_number: '+16109372347'}}, headers);
+
+			expect(resp.statusCode).to.be(200);
+			await user.reload();
+			expect(user.get('phone_number_hash')).to.be.ok();
+		});
+
 		it('can update the user\'s name', async () => {
 			let new_name = 'woahheywhat';
 			let resp = await API.post('/users/me', { user: { name: new_name }}, headers);

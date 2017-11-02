@@ -62,7 +62,7 @@ module.exports = (router, logger) => {
 			let updateParams = ctx.request.params.require('user')
 								.permit(
 									'email', 'password', 'name', 'avatar_url', 'bio', 
-									'display_name', 'post_visibility', 'old_post_visibility')
+									'display_name', 'post_visibility', 'old_post_visibility', 'phone_number')
 								.value();
 
 			let user = await User.find(ctx.current_user_id);
