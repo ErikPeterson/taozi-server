@@ -47,7 +47,7 @@ describe('Auth', () => {
 		});
 	});
 
-	describe('#_set_token()', () => {
+	describe('async #_set_token()', () => {
 		it('will skip any extant tokens', async () => {
 			let i = 0;
 			mock('../../lib/get_token', async () => {
@@ -66,7 +66,7 @@ describe('Auth', () => {
 		});
 	});
 
-	describe('.createByCredentials({email, password})', () => {
+	describe('async .createByCredentials({email, password})', () => {
 		describe('if a user with these crendentials exists', () => {
 			it('returns an auth object', async () => {
 				let user = await User.create({email: 'a@b.com', name:'a', password: '123456'});

@@ -181,7 +181,7 @@ describe('/users', () => {
 		});
 	});
 
-	describe('AUTHENTICATED POST /users/:name/unblock', () => {
+	describe('AUTHENTICATED POST /users/:name/unblock {}', () => {
 		it('removes the user from the current user\'s block list', async () => {
 			let user = await User.create({email: 'a@b.com', name: 'a', password: '123456'});
 			let blocked = await User.create({email: 'b@a.com', name: 'b', password: '123456'});
@@ -194,17 +194,9 @@ describe('/users', () => {
 			await user.reload();
 			expect(user.get('blocks').length).to.be(0);
 		});
-
-		it('returns a 404 if the user was not found', async () => {
-			let user = await User.create({email: 'a@b.com', name: 'a', password: '123456'});
-			let auth = { Authorization: `Bearer ${(await Auth.createByCredentials({email: 'a@b.com', password: '123456'})).get('token')}`};
-			let resp = await API.post('users/b/unblock', {}, auth);
-			
-			expect(resp.statusCode).to.be(404);			
-		});
 	});
 
-	describe('AUTHENTICATED POST /users/:name/block', () => {
+	describe('AUTHENTICATED POST /users/:name/block {}', () => {
 		it('adds the user to current user\'s block list', async () => {
 			let user = await User.create({email: 'a@b.com', name: 'a', password: '123456'});
 			let blocked = await User.create({email: 'b@a.com', name: 'b', password: '123456'});
@@ -216,19 +208,9 @@ describe('/users', () => {
 			await user.reload();
 			expect(user.get('blocks').includes(blocked.get('_id').toString())).to.be.ok();
 		});
-
-		describe('if the user does not exist', () => {
-			it('raises a 404', async () => {
-				let user = await User.create({email: 'a@b.com', name: 'a', password: '123456'});
-				let auth = { Authorization: `Bearer ${(await Auth.createByCredentials({email: 'a@b.com', password: '123456'})).get('token')}`};
-
-				let resp = await API.post('/users/b/block', {}, auth);
-				expect(resp.statusCode).to.be(404);
-			});
-		});
 	});
 
-	describe('AUTHENTICATED POST /users/:name/friend_requests', () => {
+	describe('AUTHENTICATED POST /users/:name/friend_requests {}', () => {
 		describe('when the users are not friends yet', () => {
 
 			describe('with an existing friend request from the requester to the indicated user', () => {
@@ -269,7 +251,7 @@ describe('/users', () => {
 		});
 	});
 
-	describe('AUTHENTICATED POST /users/me/friend_requests/:user_id/accept', () => {
+	describe('AUTHENTICATED POST /users/me/friend_requests/:user_id/accept {}', () => {
 		describe('with an existing friend request from the indicated user', () => {
 			it('adds the user as a friend, and removes the friend request/requested friend', async () => {
 					let user = await User.create({email: 'a@b.com', name: 'a', password: '123456'});
@@ -298,7 +280,7 @@ describe('/users', () => {
 		});
 	});
 
-	describe('AUTHENTICATED POST /users/me/friend_requests/:user_id/ignore', () => {
+	describe('AUTHENTICATED POST /users/me/friend_requests/:user_id/ignore {}', () => {
 		describe('with an existing friend request from the indicated user', () => {
 			it('adds the user as a friend, and removes the friend request/requested friend', async () => {
 					let user = await User.create({email: 'a@b.com', name: 'a', password: '123456'});

@@ -4,7 +4,7 @@ const expect = require('expect.js');
 const permittedParams = require('../../lib/permitted_params');
 const Parameters = require('strong-params').Parameters;
 
-describe('permittedParams(ctx, next)', () => {
+describe('async permittedParams(ctx, next)', () => {
 	it('adds params to ctx from request body', async () => {
 		let ctx = {
 			request: {

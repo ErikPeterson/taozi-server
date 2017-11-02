@@ -208,7 +208,7 @@ describe('ModelBase', () => {
 
 	describe('finders', () => {
 
-		describe('.find(_id)', () => {
+		describe('async .find(_id)', () => {
 			describe('when the record exists', () => {
 				it('returns the instance', async () => {
 					let inst = await FakeModel.create({name: 'hey'});
@@ -228,7 +228,7 @@ describe('ModelBase', () => {
 			});
 		});
 
-		describe('.findBy(query)', () => {
+		describe('async .findBy(query)', () => {
 			describe('when a record with those properties exists', () => {
 				it('returns the instance', async () => {
 					let inst = await FakeModel.create({name: 'hey'});
@@ -260,7 +260,7 @@ describe('ModelBase', () => {
 
 		});
 
-		describe('.where(query, options={})', () => {
+		describe('async .where(query, options={})', () => {
 			it('returns all matching data', async () => {
 				let inst = await FakeModel.create({name: 'hey'});
 				let inst2 = await FakeModel.create({name: 'hey'});
@@ -281,7 +281,7 @@ describe('ModelBase', () => {
 			});
 		});
 
-		describe('.exists(query)', () => {
+		describe('async .exists(query)', () => {
 			it('returns true if any records matching the query exist', async () => {
 				let inst = await FakeModel.create({name: 'name'});
 				let exists = await FakeModel.exists({name: 'name'});
@@ -321,7 +321,7 @@ describe('ModelBase', () => {
 				});
 			});
 
-			describe('#validate()', () => {
+			describe('async #validate()', () => {
 				describe('if the instance is not valid', () => {
 					it('populates and returns errors', async () => {
 						let inst = new FakeModel({name: 1, ids: 1, options: { butt: 1, what: { yes: {}, no: [], hello: {}}}})
@@ -369,7 +369,7 @@ describe('ModelBase', () => {
 
 		});
 
-		describe('#save(override_read_only=false)', () => {
+		describe('async #save(override_read_only=false)', () => {
 			describe('with a new record', () => {
 				it('saves the record to the database', async () => {
 					let inst = new FakeModel({name: 'butthead'});
@@ -477,7 +477,7 @@ describe('ModelBase', () => {
 			})
 		});
 
-		describe('#reload()', () => {
+		describe('async #reload()', () => {
 			describe('on a persisted record', () => {
 				it('reloads the instance from the database', async () => {
 					let inst = await FakeModel.create({name: 'butt'});
@@ -511,7 +511,7 @@ describe('ModelBase', () => {
 			});
 		});
 
-		describe('#update(attrs={})', () => {
+		describe('async #update(attrs={})', () => {
 			describe('on a persisted record', () => {
 				it('updates the provided attributes, then saves', async () => {
 					let inst = await FakeModel.create({name: 'butt'});
@@ -524,7 +524,7 @@ describe('ModelBase', () => {
 			});
 		});
 
-		describe('#delete()', () => {
+		describe('async #delete()', () => {
 			describe('on a persisted record', () => {
 				it('deletes the record from the db and removes the _id of the instance', async () => {
 					let inst = await FakeModel.create({name: 'butt'});
@@ -549,7 +549,7 @@ describe('ModelBase', () => {
 			});
 		});
 
-		describe('.create(attributes)', () => {
+		describe('async .create(attributes)', () => {
 			it('returns a saved new record', async () => {
 				let inst = await FakeModel.create({name: 'hey'});
 				expect(inst.persisted).to.be.ok();

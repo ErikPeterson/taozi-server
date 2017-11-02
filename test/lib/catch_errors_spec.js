@@ -5,7 +5,7 @@ const logger = require('../../lib/logger')().logger;
 const catchErrors = require('../../lib/catch_errors')(logger);
 const sinon = require('sinon');
 
-describe('catchErrors(ctx, next)', () => {
+describe('async catchErrors(ctx, next)', () => {
 	it('awaits next()', async () => {
 		let next_called = false;
 		let next = async () => { next_called = true};

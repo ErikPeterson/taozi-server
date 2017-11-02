@@ -13,14 +13,14 @@ describe('DB', () => {
 		await DB.clean();
 	});
 
-    describe('.connection', () => {
+    describe('async .connection', () => {
         it('returns a promise that resolves to a mongo connection', async ()=>{
             let conn = await DB.connection();
             expect(conn.constructor.name).to.be('Db');
         });
     });
 
-    describe('.save(collection_name, attributes)', () => {
+    describe('async .save(collection_name, attributes)', () => {
     	it('saves the provided attributes to a new record in the indicated collection', async () => {
     		let result = await DB.save('test_records', {hey: 'now'});
     		expect(result.result.ok).to.be(1);
@@ -83,7 +83,7 @@ describe('DB', () => {
         });
     });
 
-    describe('.delete(collection_name, _id)', () => {
+    describe('async .delete(collection_name, _id)', () => {
         it('deletes a single record', async () => {
             let result = await DB.save('test_records', {});
             await DB.delete('test_records', result._id);
@@ -92,7 +92,7 @@ describe('DB', () => {
         });
     });
 
-    describe('.update(collection_name, _id, attributes)', () => { 
+    describe('async .update(collection_name, _id, attributes)', () => { 
 
     	it('can update a single record', async () => {
     		let _id = (await DB.save('test_records', {a: 'b'})).insertedIds[0];
@@ -103,7 +103,7 @@ describe('DB', () => {
 
     });
 
-    describe('.find(collection_name, _id)', () => {
+    describe('async .find(collection_name, _id)', () => {
         describe('if record exists', () => {
             it('finds and returns a hash of attributes', async () => {
                 let _id = (await DB.save('test_records', {a: 'b'})).insertedIds[0];
@@ -113,7 +113,7 @@ describe('DB', () => {
         });
     });
 
-    describe('.where(collection_name, query, options={limit, page, sort})', () => {
+    describe('async .where(collection_name, query, options={limit, page, sort})', () => {
         it('returns all matching records', async () => {
             await DB.save('test_records', [{name: 'a'}, {name: 'a'}]);
             let res = await DB.where('test_records', {name: 'a'});
@@ -174,7 +174,7 @@ describe('DB', () => {
         })
     });
 
-    describe('.exists(collection_name, query)', () => {
+    describe('async .exists(collection_name, query)', () => {
         describe('if a record matching query exists', () => {
             it('returns true', async () => {
                 await DB.save('test_records', {a: 'b'});
