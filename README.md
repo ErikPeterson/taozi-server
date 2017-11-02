@@ -63,8 +63,6 @@ This will also generate a coverage folder.
 	
 ## TODO
 
-- Phone hash and look up users by contacts
-- Add multiple friend requests in one go
 - Create web interface
 - Create iOS and Android apps
 - Implement notifications
