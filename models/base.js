@@ -188,12 +188,11 @@ class ModelBase {
         this._changes = {};
     }
 
-    delete(){
-        return DB.delete(this.constructor.column_name, this._id).then((result) => {
-            if(result.deletedCount === 0) throw new RecordNotFound(this.constructor.name, {_id: this._id});
-            delete this._attributes['_id'];
-            return this;
-        });
+    async delete(){
+        let result = await DB.delete(this.constructor.column_name, this._id);
+        if(result.deletedCount === 0) throw new RecordNotFound(this.constructor.name, {_id: this._id});
+        delete this._attributes['_id'];
+        return this;
     }
 
     async validate(){

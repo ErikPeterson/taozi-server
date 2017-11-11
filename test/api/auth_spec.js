@@ -17,9 +17,9 @@ describe('/auth', () => {
 		await DB.clean();
 	});
 
+	let props = {name:'hey', email: 'e@p.com', password: '123456'};
 
 	describe('POST / { auth: { email, password} }', () => {
-		let props = {name:'hey', email: 'e@p.com', password: '123456'};
 		
 		beforeEach(async () => {
 			await User.create(props);
@@ -61,5 +61,33 @@ describe('/auth', () => {
 				this.stub.restore();
 			});
 		})
+	});
+
+	describe('DELETE /', () => {
+		let token,
+			header;
+
+		beforeEach(async () => {
+			await User.create(props);
+			token = (await Auth.createByCredentials({password: props.password, email: props.email})).get('token');
+			header = { Authorization: `Bearer ${token}`}
+		});
+
+		describe('with a token that still exists', () => {
+			it('signs out the user and invalidates the current auth token', async () => {
+				let resp = await API.delete('/auth', header);
+				expect(resp.statusCode).to.be(200);
+				
+				let resp2 = await API.post('/users/me', { user: { name: 'butthead'}}, header);
+				expect(resp2.statusCode).to.be(401);
+			})
+		});;
+
+		describe('with no token', () => {
+			it('responds with a 401 error', async () => {
+				let resp = await API.delete('/auth', {});
+				expect(resp.statusCode).to.be(401);
+			})
+		});
 	});
 });
