@@ -29,7 +29,7 @@ module.exports = (router, logger) => {
 	auth.delete('delete_auth', '/', authenticateUser, async (ctx, next) => {
 		await ctx.auth.delete();
 		ctx.response.status = 200;
-		ctx.response.body = '';
+		ctx.response.body = {};
 	});
 
 
